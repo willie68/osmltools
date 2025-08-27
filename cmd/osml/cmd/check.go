@@ -20,11 +20,11 @@ var checkCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(checkCmd)
 
-	checkCmd.Flags().StringP("output", "o", "./track.nmea", "output file with path. Default is track.nmea")
+	checkCmd.Flags().StringP("output", "o", "./", "output folder. Default is actual working folder")
 }
 
 // Check get the checker and execute it on the sd file set
-func Check(sdCardFolder string, outputFile string) error {
+func Check(sdCardFolder string, outputFolder string) error {
 	chk := do.MustInvoke[check.Checker](nil)
-	return chk.Check(sdCardFolder, outputFile)
+	return chk.Check(sdCardFolder, outputFolder)
 }

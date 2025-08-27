@@ -13,7 +13,6 @@ builds:
       - linux
       - windows
       - darwin
-  - ldflags:
 archives:
   - formats: ['tar.gz']
     # this name template makes the OS and Arch compatible with the results of `uname`.
