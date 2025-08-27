@@ -1,8 +1,12 @@
 package osmlnmea
 
 import (
+	"regexp"
+
 	"github.com/adrianmo/go-nmea"
 )
+
+const nmeaRegex = `^\$[A-Za-z]{5}([0-9A-Za-z]*,)*\*[0-9A-Fa-f]{2}\r\n$`
 
 // $POSMST,Start NMEA Logger,V 0.1.15*06
 type OSMST struct {
@@ -26,8 +30,9 @@ type OSMCFG struct {
 //$POSMACC,112,10372,14156*5E
 
 var (
-	sp     nmea.SentenceParser
-	actual *nmea.BaseSentence
+	sp      nmea.SentenceParser
+	actual  *nmea.BaseSentence
+	nmeaReg *regexp.Regexp
 )
 
 func init() {
@@ -64,6 +69,10 @@ func init() {
 		actual = sentence
 		return nil
 	}
+
+	// Compile the regex
+	nmeaReg = regexp.MustCompile(nmeaRegex)
+
 }
 
 func ParseNMEA(line string) (nmea.Sentence, error) {
@@ -73,4 +82,8 @@ func ParseNMEA(line string) (nmea.Sentence, error) {
 		return actual, err
 	}
 	return nm, nil
+}
+
+func IsNMEASentence(sentence string) bool {
+	return nmeaReg.MatchString(sentence)
 }

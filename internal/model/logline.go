@@ -26,7 +26,12 @@ func ParseLogLine(line string) (ll *LogLine, ok bool, err error) {
 		Unknown:   sl[2],
 	}
 
-	ll.NMEAMessage, err = osmlnmea.ParseNMEA(sl[2])
-	ok = ll.NMEAMessage != nil
+	msg, err := osmlnmea.ParseNMEA(sl[2])
+	if err != nil {
+		if osmlnmea.IsNMEASentence(ll.Unknown) {
+			ll.NMEAMessage = msg
+			ok = true
+		}
+	}
 	return
 }
