@@ -16,7 +16,7 @@ type LogLine struct {
 }
 
 func ParseLogLine(line string) (ll *LogLine, ok bool, err error) {
-	sl := strings.SplitAfterN(line, ";", 3)
+	sl := strings.SplitN(line, ";", 3)
 	if len(sl) < 3 {
 		return nil, false, errors.New("to less message parts")
 	}
@@ -26,12 +26,11 @@ func ParseLogLine(line string) (ll *LogLine, ok bool, err error) {
 		Unknown:   sl[2],
 	}
 
+	ok = true
 	msg, err := osmlnmea.ParseNMEA(sl[2])
-	if err != nil {
-		if osmlnmea.IsNMEASentence(ll.Unknown) {
-			ll.NMEAMessage = msg
-			ok = true
-		}
+	ll.NMEAMessage = msg
+	if err != nil && !osmlnmea.IsNMEASentence(ll.Unknown) {
+		ok = false
 	}
 	return
 }

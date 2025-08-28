@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
+	"github.com/willie68/osmltools/internal"
 	"github.com/willie68/osmltools/internal/logging"
 )
 
@@ -18,6 +19,7 @@ var (
 			if verbose {
 				logging.Root.SetLevel(logging.Debug)
 			}
+			internal.Init()
 		},
 	}
 	sdCardFolder string

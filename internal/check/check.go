@@ -3,11 +3,14 @@ package check
 import (
 	"bufio"
 	"errors"
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
+	"slices"
+	"strings"
 
-	"github.com/samber/do"
+	"github.com/samber/do/v2"
 	utils "github.com/willie68/gowillie68/pkg"
 	"github.com/willie68/gowillie68/pkg/fileutils"
 	"github.com/willie68/osmltools/internal/logging"
@@ -20,18 +23,20 @@ var (
 )
 
 type Checker struct {
-	files []string
-	log   logging.Logger
+	files       []string
+	log         logging.Logger
+	UnknownTags int
+	ErrorTags   int
 }
 
-func init() {
+func Init(inj do.Injector) {
 	chk := Checker{
 		log: *logging.New().WithName("Checker"),
 	}
-	do.ProvideValue(nil, chk)
+	do.ProvideValue(inj, chk)
 }
 
-func (c *Checker) Check(sdCardFolder, outputFolder string) error {
+func (c *Checker) Check(sdCardFolder, outputFolder string, overwrite bool) error {
 	c.log.Infof("check called: sd %s, out: %s", sdCardFolder, outputFolder)
 
 	files, err := c.getDataFiles(sdCardFolder)
@@ -40,6 +45,7 @@ func (c *Checker) Check(sdCardFolder, outputFolder string) error {
 	}
 	c.files = make([]string, 0)
 	c.files = append(c.files, files...)
+	c.log.Infof("Found %d files on sd card", len(files))
 
 	err = os.MkdirAll(outputFolder, os.ModePerm)
 	if err != nil {
@@ -47,14 +53,17 @@ func (c *Checker) Check(sdCardFolder, outputFolder string) error {
 	}
 
 	for _, lf := range files {
+		set := c.ErrorTags
+		sut := c.UnknownTags
 		c.log.Infof("start with file %s", lf)
 		err := c.analyseLoggerFile(lf, outputFolder)
 		if err != nil {
 			return err
 		}
+		c.log.Infof("file parsed with %d errors and %d unknown tags", c.ErrorTags-set, c.UnknownTags-sut)
 	}
 
-	c.log.Infof("Found %d files on sd card", len(files))
+	c.log.Infof("all files parsed with %d errors and %d unknown tags", c.ErrorTags, c.UnknownTags)
 	return nil
 }
 
@@ -63,6 +72,7 @@ func (c *Checker) analyseLoggerFile(lf, of string) error {
 	if err != nil {
 		return err
 	}
+	defer f.Close()
 	scanner := bufio.NewScanner(f)
 	count := 0
 	ls := make([]model.LogLine, 0)
@@ -73,8 +83,10 @@ func (c *Checker) analyseLoggerFile(lf, of string) error {
 		ll, ok, err := model.ParseLogLine(line)
 		if err != nil {
 			if ok {
-				c.log.Alertf("warning unknown NMEA Tag in line %d: %s", count, line)
+				c.UnknownTags++
+				c.log.Debugf("warning unknown NMEA Tag in line %d: %s", count, line)
 			} else {
+				c.ErrorTags++
 				c.log.Errorf("error in line %d: %s", count, line)
 			}
 		}
@@ -85,11 +97,39 @@ func (c *Checker) analyseLoggerFile(lf, of string) error {
 
 	// Check for errors during the scan
 	if err := scanner.Err(); err != nil {
-		c.log.Fatalf("error reading file: %s", err)
+		c.log.Fatalf("error reading file: %v", err)
 		return err
 	}
+	off := filepath.Join(of, utils.FileNameWithoutExtension(filepath.Base(f.Name()))+".nmea")
+	if utils.FileExists(off) {
+		return errors.Join(ErrOutputfileAlreadyExists, fmt.Errorf("output file name: %s", off))
+	}
 
-	defer f.Close()
+	slices.SortFunc(ls, func(a, b model.LogLine) int {
+		return strings.Compare(strings.ToLower(a.Timestamp), strings.ToLower(b.Timestamp))
+	})
+
+	fo, err := os.OpenFile(off, os.O_CREATE, os.ModePerm)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		err := fo.Close()
+		if err != nil {
+			c.log.Fatalf("error closing output file: %v", err)
+		}
+	}()
+
+	for _, ll := range ls {
+		fo.WriteString(fmt.Sprintf("%s;%s;", ll.Timestamp, ll.Channel))
+		if ll.NMEAMessage != nil {
+			fo.WriteString(ll.NMEAMessage.String())
+		} else {
+			fo.WriteString(ll.Unknown)
+		}
+		fo.WriteString("\r\n")
+	}
+	c.log.Infof("writing clean up file to %s", off)
 	return nil
 }
 

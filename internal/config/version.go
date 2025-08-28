@@ -1,5 +1,13 @@
 package config
 
+import "github.com/samber/do/v2"
+
+var (
+	version = "dev"
+	commit  = "none"
+	date    = "unknown"
+)
+
 // Version the version information
 type Version struct {
 	version string
@@ -7,9 +15,18 @@ type Version struct {
 	date    string
 }
 
+func Init(inj *do.Injector) {
+	ver := NewVersion()
+	do.ProvideValue(nil, *ver)
+}
+
 // NewVersion creating a new version
 func NewVersion() *Version {
-	return &Version{}
+	return &Version{
+		version: version,
+		commit:  commit,
+		date:    date,
+	}
 }
 
 // WithVersion setting the version information fluid

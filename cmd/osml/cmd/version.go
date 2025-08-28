@@ -4,22 +4,22 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/samber/do/v2"
 	"github.com/spf13/cobra"
 	"github.com/willie68/osmltools/internal/config"
 )
 
 var (
-	// CmdVersion holding all version information
-	CmdVersion config.Version
-
 	// versionCmd represents the version command
+
 	versionCmd = &cobra.Command{
 		Use:   "version",
 		Short: "the osml version",
 		Long:  `the open sea map logger tools version`,
 		Run: func(cmd *cobra.Command, args []string) {
+			ver := do.MustInvoke[config.Version](nil)
 			fmt.Printf("osml: %s \r\n", os.Args[0])
-			fmt.Printf("Version: %s, %s, builded %s \r\n", CmdVersion.Version(), CmdVersion.Commit(), CmdVersion.Date())
+			fmt.Printf("Version: %s, %s, builded %s \r\n", ver.Version(), ver.Commit(), ver.Date())
 		},
 	}
 )

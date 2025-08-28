@@ -6,7 +6,7 @@ import (
 	"github.com/adrianmo/go-nmea"
 )
 
-const nmeaRegex = `^\$[A-Za-z]{5}([0-9A-Za-z]*,)*\*[0-9A-Fa-f]{2}\r\n$`
+const nmeaRegex = `^(\$[A-Za-z]{5,7}(?:,[0-9A-Za-z\-\:\.\s]*)+\*[0-9A-Fa-f]{2}){1}$`
 
 // $POSMST,Start NMEA Logger,V 0.1.15*06
 type OSMST struct {
@@ -26,8 +26,27 @@ type OSMCFG struct {
 	BootLoader int64
 }
 
-//$POSMGYR,-328,-131,-37*42
-//$POSMACC,112,10372,14156*5E
+// $POSMGYR,-328,-131,-37*42
+type OSMGYR struct {
+	nmea.BaseSentence
+	XAxis int64
+	YAxis int64
+	ZAxis int64
+}
+
+// $POSMACC,112,10372,14156*5E
+type OSMACC struct {
+	nmea.BaseSentence
+	XAcc int64
+	YAcc int64
+	ZAcc int64
+}
+
+// $POSMSO,Reason: times up*4C
+type OSMSO struct {
+	nmea.BaseSentence
+	Message string
+}
 
 var (
 	sp      nmea.SentenceParser
@@ -51,6 +70,16 @@ func init() {
 		}, p.Err()
 	}
 
+	sp.CustomParsers["OSMSO"] = func(s nmea.BaseSentence) (nmea.Sentence, error) {
+		// This example uses the package builtin parsing helpers
+		// you can implement your own parsing logic also
+		p := nmea.NewParser(s)
+		return OSMSO{
+			BaseSentence: s,
+			Message:      p.String(0, "message"),
+		}, p.Err()
+	}
+
 	sp.CustomParsers["OSMCFG"] = func(s nmea.BaseSentence) (nmea.Sentence, error) {
 		// This example uses the package builtin parsing helpers
 		// you can implement your own parsing logic also
@@ -65,6 +94,27 @@ func init() {
 			BootLoader:   p.Int64(0, "bootloader"),
 		}, p.Err()
 	}
+
+	sp.CustomParsers["OSMGYR"] = func(s nmea.BaseSentence) (nmea.Sentence, error) {
+		p := nmea.NewParser(s)
+		return OSMGYR{
+			BaseSentence: s,
+			XAxis:        p.Int64(0, "xaxis"),
+			YAxis:        p.Int64(0, "yaxis"),
+			ZAxis:        p.Int64(0, "zaxis"),
+		}, p.Err()
+	}
+
+	sp.CustomParsers["OSMACC"] = func(s nmea.BaseSentence) (nmea.Sentence, error) {
+		p := nmea.NewParser(s)
+		return OSMACC{
+			BaseSentence: s,
+			XAcc:         p.Int64(0, "xacc"),
+			YAcc:         p.Int64(0, "yacc"),
+			ZAcc:         p.Int64(0, "zacc"),
+		}, p.Err()
+	}
+
 	sp.OnBaseSentence = func(sentence *nmea.BaseSentence) error {
 		actual = sentence
 		return nil
@@ -72,7 +122,6 @@ func init() {
 
 	// Compile the regex
 	nmeaReg = regexp.MustCompile(nmeaRegex)
-
 }
 
 func ParseNMEA(line string) (nmea.Sentence, error) {

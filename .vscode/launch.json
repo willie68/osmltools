@@ -16,7 +16,7 @@
                 "-s",
                 "./testdata/sdcard",
                 "-o",
-                "./testdata/tmp/tracks.nmea"
+                "./testdata/tmp"
             ]
         }
     ]
