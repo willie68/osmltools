@@ -50,7 +50,7 @@ type OSMSO struct {
 
 var (
 	sp      nmea.SentenceParser
-	actual  *nmea.BaseSentence
+	actual  nmea.Sentence
 	nmeaReg *regexp.Regexp
 )
 

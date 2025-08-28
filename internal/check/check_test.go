@@ -26,7 +26,7 @@ func TestCheckSuite(t *testing.T) {
 func (s *CheckSuite) SetupTest() {
 	s.ast = assert.New(s.T())
 	s.chk = Checker{
-		log: *logging.New().WithName("testchecker").WithLevel(logging.Debug),
+		log: *logging.New().WithName("testchecker").WithLevel(logging.Error),
 	}
 }
 
@@ -41,8 +41,8 @@ func (s *CheckSuite) TestCheckBasicCheck() {
 		true,
 	)
 	s.ast.NoError(err)
-	s.ast.Equal(7, s.chk.ErrorTags)
-	s.ast.Equal(24421, s.chk.UnknownTags)
+	s.ast.Equal(8147, s.chk.ErrorTags)
+	s.ast.Equal(16281, s.chk.UnknownTags)
 	s.ast.True(utils.FileExists(filepath.Join(of, "DATA001231.nmea")))
 	s.ast.True(utils.FileExists(filepath.Join(of, "DATA001232.nmea")))
 	s.ast.True(utils.FileExists(filepath.Join(of, "DATA001233.nmea")))

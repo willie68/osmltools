@@ -56,7 +56,11 @@ func (c *Checker) Check(sdCardFolder, outputFolder string, overwrite bool) error
 		set := c.ErrorTags
 		sut := c.UnknownTags
 		c.log.Infof("start with file %s", lf)
-		err := c.analyseLoggerFile(lf, outputFolder)
+		ls, err := c.analyseLoggerFile(lf, outputFolder)
+		if err != nil {
+			return err
+		}
+		err = c.outputToFolder(lf, outputFolder, ls)
 		if err != nil {
 			return err
 		}
@@ -67,15 +71,16 @@ func (c *Checker) Check(sdCardFolder, outputFolder string, overwrite bool) error
 	return nil
 }
 
-func (c *Checker) analyseLoggerFile(lf, of string) error {
+func (c *Checker) analyseLoggerFile(lf, of string) ([]model.LogLine, error) {
 	f, err := os.Open(lf)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer f.Close()
+
 	scanner := bufio.NewScanner(f)
-	count := 0
 	ls := make([]model.LogLine, 0)
+	count := 0
 	// Loop through the file and read each line
 	for scanner.Scan() {
 		count++
@@ -87,7 +92,7 @@ func (c *Checker) analyseLoggerFile(lf, of string) error {
 				c.log.Debugf("warning unknown NMEA Tag in line %d: %s", count, line)
 			} else {
 				c.ErrorTags++
-				c.log.Errorf("error in line %d: %s", count, line)
+				c.log.Errorf("error in line %d: %s: %v", count, line, err)
 			}
 		}
 		if ok {
@@ -98,17 +103,20 @@ func (c *Checker) analyseLoggerFile(lf, of string) error {
 	// Check for errors during the scan
 	if err := scanner.Err(); err != nil {
 		c.log.Fatalf("error reading file: %v", err)
-		return err
-	}
-	off := filepath.Join(of, utils.FileNameWithoutExtension(filepath.Base(f.Name()))+".nmea")
-	if utils.FileExists(off) {
-		return errors.Join(ErrOutputfileAlreadyExists, fmt.Errorf("output file name: %s", off))
+		return nil, err
 	}
 
 	slices.SortFunc(ls, func(a, b model.LogLine) int {
 		return strings.Compare(strings.ToLower(a.Timestamp), strings.ToLower(b.Timestamp))
 	})
+	return ls, nil
+}
 
+func (c *Checker) outputToFolder(lf, of string, ls []model.LogLine) error {
+	off := filepath.Join(of, utils.FileNameWithoutExtension(filepath.Base(lf))+".nmea")
+	if utils.FileExists(off) {
+		return errors.Join(ErrOutputfileAlreadyExists, fmt.Errorf("output file name: %s", off))
+	}
 	fo, err := os.OpenFile(off, os.O_CREATE, os.ModePerm)
 	if err != nil {
 		return err

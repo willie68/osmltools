@@ -28,8 +28,14 @@ func ParseLogLine(line string) (ll *LogLine, ok bool, err error) {
 
 	ok = true
 	msg, err := osmlnmea.ParseNMEA(sl[2])
+	var asError *nmea.NotSupportedError
+	if errors.As(err, &asError) {
+		if osmlnmea.IsNMEASentence(ll.Unknown) {
+			return
+		}
+	}
 	ll.NMEAMessage = msg
-	if err != nil && !osmlnmea.IsNMEASentence(ll.Unknown) {
+	if err != nil {
 		ok = false
 	}
 	return
