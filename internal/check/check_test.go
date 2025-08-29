@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	utils "github.com/willie68/gowillie68/pkg"
 	"github.com/willie68/osmltools/internal/logging"
+	"github.com/willie68/osmltools/internal/osml"
 )
 
 const testdata = "../../testdata"
@@ -54,7 +55,7 @@ func (s *CheckSuite) TestCheckBasicCheck() {
 
 func (s *CheckSuite) TestCheckWrongSDCardFolder() {
 	err := s.chk.Check("./testdata/sdcard1", "./testdata/temp/track.nmea", false, false)
-	s.ast.ErrorIs(ErrWrongCardFolder, err)
+	s.ast.ErrorIs(osml.ErrWrongCardFolder, err)
 }
 
 func (s *CheckSuite) TestCheckNMEAFileAlreadyExists() {

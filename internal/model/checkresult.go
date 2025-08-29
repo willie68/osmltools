@@ -57,6 +57,18 @@ func (c *CheckResult) WithFileResult(fn string, fr *FileResult) *CheckResult {
 	return c
 }
 
+func AddWarning(fr *FileResult, msg string) {
+	if fr != nil {
+		fr.Warnings = append(fr.Warnings, msg)
+	}
+}
+
+func AddError(fr *FileResult, msg string) {
+	if fr != nil {
+		fr.Errors = append(fr.Errors, msg)
+	}
+}
+
 func (f *FileResult) WithFilename(fn string) *FileResult {
 	f.Filename = fn
 	return f

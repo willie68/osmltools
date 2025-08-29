@@ -159,11 +159,10 @@ func (s *Logger) WithName(name string) *Logger {
 // Debug log this message at debug level
 func (s *Logger) Debug(m string) {
 	if s.LevelInt <= 0 {
-		msg := s.format(m)
 		if s.gelfActive {
-			_ = s.l.Dbg(msg)
+			_ = s.l.Dbg(m)
 		}
-		log.Printf("Debug: %s\n", msg)
+		log.Printf("Debug: %s\n", m)
 	}
 }
 
@@ -181,11 +180,10 @@ func (s *Logger) Debugf(format string, va ...any) {
 // Info log this message at info level
 func (s *Logger) Info(m string) {
 	if s.LevelInt <= 1 {
-		msg := s.format(m)
 		if s.gelfActive {
-			_ = s.l.Info(msg)
+			_ = s.l.Info(m)
 		}
-		log.Printf("Info: %s\n", msg)
+		log.Printf("Info: %s\n", m)
 	}
 }
 
@@ -203,11 +201,10 @@ func (s *Logger) Infof(format string, va ...any) {
 // Alert log this message at alert level
 func (s *Logger) Alert(m string) {
 	if s.LevelInt <= 2 {
-		msg := s.format(m)
 		if s.gelfActive {
-			_ = s.l.Alert(msg)
+			_ = s.l.Alert(m)
 		}
-		log.Printf("Alert: %s\n", msg)
+		log.Printf("Alert: %s\n", m)
 	}
 }
 
@@ -225,11 +222,10 @@ func (s *Logger) Alertf(format string, va ...any) {
 // Fatal logs a message at level Fatal on the standard logger.
 func (s *Logger) Fatal(m string) {
 	if s.LevelInt <= 4 {
-		msg := s.format(m)
 		if s.gelfActive {
-			_ = s.l.Crit(msg)
+			_ = s.l.Crit(m)
 		}
-		log.Printf("Fatal: %s\n", msg)
+		log.Printf("Fatal: %s\n", m)
 	}
 }
 
@@ -247,11 +243,10 @@ func (s *Logger) Fatalf(format string, va ...any) {
 // Error logs a message at level Error on the standard logger.
 func (s *Logger) Error(m string) {
 	if s.LevelInt <= 3 {
-		msg := s.format(m)
 		if s.gelfActive {
-			_ = s.l.Err(msg)
+			_ = s.l.Err(m)
 		}
-		log.Printf("Error: %s\n", msg)
+		log.Printf("Error: %s\n", m)
 	}
 }
 

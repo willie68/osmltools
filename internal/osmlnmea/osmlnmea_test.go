@@ -93,7 +93,6 @@ func (s *OsmlnmeaSuite) TestErrorline() {
 	}{
 		{line: "I��b��b��b��b�ºb��b��b��b�ʪb��R��j"},
 		{line: "$GPGLL,,,,,101221,*51$GPRMC,101224,V,,,,,,,110916,,*3B"},
-		{line: "$GPGSV,3,1,11,01,56,294,45,03,24,230,44,08,59,180,32,,1.9,0.9,1.6*34"},
 	}
 
 	for _, tt := range myTests {

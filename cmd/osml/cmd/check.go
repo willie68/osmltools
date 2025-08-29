@@ -15,10 +15,10 @@ var checkCmd = &cobra.Command{
 	Short: "check the data files of the osmlogger",
 	Long:  `check the data files of the open sea map logger  and write cleanup to an output folder`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		outputFile, _ := cmd.Flags().GetString("output")
+		outputFolder, _ := cmd.Flags().GetString("output")
 		overwrite, _ := cmd.Flags().GetBool("overwrite")
 		report, _ := cmd.Flags().GetBool("report")
-		return Check(sdCardFolder, outputFile, overwrite, report)
+		return Check(sdCardFolder, outputFolder, overwrite, report)
 	},
 }
 
@@ -31,7 +31,7 @@ func init() {
 }
 
 // Check get the checker and execute it on the sd file set
-func Check(sdCardFolder string, outputFolder string, overwrite, report bool) error {
+func Check(sdCardFolder, outputFolder string, overwrite, report bool) error {
 	chk := do.MustInvoke[check.Checker](nil)
 	td := time.Now()
 	err := chk.Check(sdCardFolder, outputFolder, overwrite, report)

@@ -4,19 +4,17 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"io/fs"
 	"os"
 	"path/filepath"
-	"slices"
-	"strings"
+	"sort"
 	"time"
 
 	"github.com/adrianmo/go-nmea"
 	"github.com/samber/do/v2"
 	utils "github.com/willie68/gowillie68/pkg"
-	"github.com/willie68/gowillie68/pkg/fileutils"
 	"github.com/willie68/osmltools/internal/logging"
 	"github.com/willie68/osmltools/internal/model"
+	"github.com/willie68/osmltools/internal/osml"
 	"github.com/willie68/osmltools/internal/osmlnmea"
 )
 
@@ -25,7 +23,6 @@ const (
 )
 
 var (
-	ErrWrongCardFolder         = errors.New("sd card folder not exists")
 	ErrOutputfileAlreadyExists = errors.New("the output file already exists")
 )
 
@@ -46,7 +43,7 @@ func Init(inj do.Injector) {
 func (c *Checker) Check(sdCardFolder, outputFolder string, overwrite, report bool) error {
 	c.log.Infof("check called: sd %s, out: %s", sdCardFolder, outputFolder)
 	result := model.NewCheckResult()
-	files, err := c.getDataFiles(sdCardFolder)
+	files, err := osml.GetDataFiles(sdCardFolder)
 	if err != nil {
 		return err
 	}
@@ -60,21 +57,10 @@ func (c *Checker) Check(sdCardFolder, outputFolder string, overwrite, report boo
 	}
 
 	for _, lf := range files {
-		ofn := filepath.Base(lf)
-		fr := model.NewFileResult().WithOrigin(ofn)
-		result.WithFileResult(ofn, fr)
-		set := c.ErrorTags
-		sut := c.UnknownTags
-		c.log.Infof("start with file %s", lf)
-		ls, err := c.analyseLoggerFile(fr, lf)
-		if err != nil {
-			return err
+		err1 := c.checkFile(lf, result, outputFolder, overwrite)
+		if err1 != nil {
+			return err1
 		}
-		err = c.outputToFolder(fr, lf, outputFolder, ls, overwrite)
-		if err != nil {
-			return err
-		}
-		c.log.Infof("file parsed with %d errors and %d unknown tags", c.ErrorTags-set, c.UnknownTags-sut)
 	}
 	if report {
 		err = c.WriteResult(outputFolder, *result)
@@ -86,7 +72,26 @@ func (c *Checker) Check(sdCardFolder, outputFolder string, overwrite, report boo
 	return nil
 }
 
-func (c *Checker) analyseLoggerFile(fr *model.FileResult, lf string) ([]model.LogLine, error) {
+func (c *Checker) checkFile(loggerfile string, result *model.CheckResult, outputFolder string, overwrite bool) error {
+	ofn := filepath.Base(loggerfile)
+	fr := model.NewFileResult().WithOrigin(ofn)
+	result.WithFileResult(ofn, fr)
+	set := c.ErrorTags
+	sut := c.UnknownTags
+	c.log.Infof("start with file %s", loggerfile)
+	ls, err := c.AnalyseLoggerFile(fr, loggerfile)
+	if err != nil {
+		return err
+	}
+	err = c.outputToFolder(fr, loggerfile, outputFolder, ls, overwrite)
+	if err != nil {
+		return err
+	}
+	c.log.Infof("file parsed with %d errors and %d unknown tags", c.ErrorTags-set, c.UnknownTags-sut)
+	return nil
+}
+
+func (c *Checker) AnalyseLoggerFile(fr *model.FileResult, lf string) ([]model.LogLine, error) {
 	f, err := os.Open(lf)
 	if err != nil {
 		return nil, err
@@ -106,12 +111,12 @@ func (c *Checker) analyseLoggerFile(fr *model.FileResult, lf string) ([]model.Lo
 				c.UnknownTags++
 				ls := fmt.Sprintf("warning unknown NMEA Tag in line %d: %s", count, line)
 				c.log.Debug(ls)
-				fr.Warnings = append(fr.Warnings, ls)
+				model.AddWarning(fr, ls)
 			} else {
 				c.ErrorTags++
 				ls := fmt.Sprintf("error in line %d: %s: %v", count, line, err)
 				c.log.Debug(ls)
-				fr.Errors = append(fr.Errors, ls)
+				model.AddError(fr, ls)
 			}
 		}
 		if ok {
@@ -125,8 +130,8 @@ func (c *Checker) analyseLoggerFile(fr *model.FileResult, lf string) ([]model.Lo
 		return nil, err
 	}
 
-	slices.SortFunc(ls, func(a, b model.LogLine) int {
-		return strings.Compare(strings.ToLower(a.Timestamp), strings.ToLower(b.Timestamp))
+	sort.Slice(ls, func(i, j int) bool {
+		return ls[i].Timestamp.Before(ls[j].Timestamp)
 	})
 	return ls, nil
 }
@@ -212,18 +217,6 @@ func (c *Checker) processCFG(ll model.LogLine, found bool) (vesselID int64, ok b
 		}
 	}
 	return
-}
-
-func (c *Checker) getDataFiles(sdCardFolder string) ([]string, error) {
-	files := make([]string, 0)
-	if !utils.FileExists(sdCardFolder) {
-		return files, ErrWrongCardFolder
-	}
-	err := fileutils.GetFiles(sdCardFolder, "data", func(fileinfo fs.DirEntry) bool {
-		files = append(files, filepath.Join(sdCardFolder, fileinfo.Name()))
-		return true
-	})
-	return files, err
 }
 
 func (c *Checker) WriteResult(of string, res model.CheckResult) error {
