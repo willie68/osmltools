@@ -39,19 +39,21 @@ func (s *CheckSuite) TestCheckBasicCheck() {
 		filepath.Join(testdata, "sdcard"),
 		of,
 		true,
+		true,
 	)
 	s.ast.NoError(err)
 	s.ast.Equal(8147, s.chk.ErrorTags)
 	s.ast.Equal(16281, s.chk.UnknownTags)
-	s.ast.True(utils.FileExists(filepath.Join(of, "DATA001231.nmea")))
-	s.ast.True(utils.FileExists(filepath.Join(of, "DATA001232.nmea")))
-	s.ast.True(utils.FileExists(filepath.Join(of, "DATA001233.nmea")))
-	s.ast.True(utils.FileExists(filepath.Join(of, "DATA001234.nmea")))
-	s.ast.True(utils.FileExists(filepath.Join(of, "DATA001235.nmea")))
+	s.ast.True(utils.FileExists(filepath.Join(of, "597-DATA001231-2016-09-11.nmea")))
+	s.ast.True(utils.FileExists(filepath.Join(of, "597-DATA001232-2016-09-11.nmea")))
+	s.ast.True(utils.FileExists(filepath.Join(of, "597-DATA001233-2016-09-11.nmea")))
+	s.ast.True(utils.FileExists(filepath.Join(of, "597-DATA001234-2016-09-11.nmea")))
+	s.ast.True(utils.FileExists(filepath.Join(of, "597-DATA001235-2016-09-11.nmea")))
+	s.ast.True(utils.FileExists(filepath.Join(of, "report.json")))
 }
 
 func (s *CheckSuite) TestCheckWrongSDCardFolder() {
-	err := s.chk.Check("./testdata/sdcard1", "./testdata/temp/track.nmea", false)
+	err := s.chk.Check("./testdata/sdcard1", "./testdata/temp/track.nmea", false, false)
 	s.ast.ErrorIs(ErrWrongCardFolder, err)
 }
 
@@ -59,6 +61,7 @@ func (s *CheckSuite) TestCheckNMEAFileAlreadyExists() {
 	err := s.chk.Check(
 		filepath.Join(testdata, "sdcard"),
 		filepath.Join(testdata, "already"),
+		false,
 		false,
 	)
 	s.ast.ErrorIs(err, ErrOutputfileAlreadyExists)

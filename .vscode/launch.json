@@ -16,7 +16,9 @@
                 "-s",
                 "./testdata/sdcard",
                 "-o",
-                "./testdata/tmp"
+                "./testdata/tmp",
+                "-w",
+                "-r"
             ]
         }
     ]
