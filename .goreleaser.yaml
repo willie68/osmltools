@@ -13,6 +13,9 @@ builds:
       - linux
       - windows
       - darwin
+    goarch:
+      - amd64
+      - arm64
     main: ./cmd/osml/
     ldflags:
       - -s -w -X github.com/willie68/osmltools/internal/config.version={{.Version}} -X github.com/willie68/osmltools/internal/config.commit={{.Commit}} -X github.com/willie68/osmltools/internal/config.date={{.Date}}
