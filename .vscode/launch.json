@@ -35,9 +35,9 @@
                 "-s",
                 "./testdata/sdcard",
                 "-o",
-                "./testdata/tmp/track.nmea",
+                "./testdata/tmp/",
                 "-f",
-                "gpx"
+                "nmea"
             ]
         }
     ]

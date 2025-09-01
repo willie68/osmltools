@@ -40,6 +40,7 @@ func Init(inj do.Injector) {
 	do.ProvideValue(inj, chk)
 }
 
+// Check checks the sd card folder and writes the cleaned up NMEA files to the output folder
 func (c *Checker) Check(sdCardFolder, outputFolder string, overwrite, report bool) error {
 	c.log.Infof("check called: sd %s, out: %s", sdCardFolder, outputFolder)
 	result := model.NewCheckResult()
@@ -72,6 +73,7 @@ func (c *Checker) Check(sdCardFolder, outputFolder string, overwrite, report boo
 	return nil
 }
 
+// checkFile checks a single logger file and writes the cleaned up NMEA file to the output folder
 func (c *Checker) checkFile(loggerfile string, result *model.CheckResult, outputFolder string, overwrite bool) error {
 	ofn := filepath.Base(loggerfile)
 	fr := model.NewFileResult().WithOrigin(ofn)
@@ -83,6 +85,10 @@ func (c *Checker) checkFile(loggerfile string, result *model.CheckResult, output
 	if err != nil {
 		return err
 	}
+	ls, err = c.CorrectTimeStamp(ls)
+	if err != nil {
+		return err
+	}
 	err = c.outputToFolder(fr, loggerfile, outputFolder, ls, overwrite)
 	if err != nil {
 		return err
@@ -91,7 +97,8 @@ func (c *Checker) checkFile(loggerfile string, result *model.CheckResult, output
 	return nil
 }
 
-func (c *Checker) AnalyseLoggerFile(fr *model.FileResult, lf string) ([]model.LogLine, error) {
+// AnalyseLoggerFile analyses a single logger file and returns the log lines found
+func (c *Checker) AnalyseLoggerFile(fr *model.FileResult, lf string) ([]*model.LogLine, error) {
 	f, err := os.Open(lf)
 	if err != nil {
 		return nil, err
@@ -99,7 +106,7 @@ func (c *Checker) AnalyseLoggerFile(fr *model.FileResult, lf string) ([]model.Lo
 	defer f.Close()
 
 	scanner := bufio.NewScanner(f)
-	ls := make([]model.LogLine, 0)
+	ls := make([]*model.LogLine, 0)
 	count := 0
 	// Loop through the file and read each line
 	for scanner.Scan() {
@@ -120,7 +127,7 @@ func (c *Checker) AnalyseLoggerFile(fr *model.FileResult, lf string) ([]model.Lo
 			}
 		}
 		if ok {
-			ls = append(ls, *ll)
+			ls = append(ls, ll)
 		}
 	}
 
@@ -131,12 +138,60 @@ func (c *Checker) AnalyseLoggerFile(fr *model.FileResult, lf string) ([]model.Lo
 	}
 
 	sort.Slice(ls, func(i, j int) bool {
-		return ls[i].Timestamp.Before(ls[j].Timestamp)
+		return ls[i].Duration < ls[j].Duration
 	})
 	return ls, nil
 }
 
-func (c *Checker) outputToFolder(fr *model.FileResult, lf, of string, ls []model.LogLine, overwrite bool) error {
+// CorrectTimeStamp corrects the timestamp of the log lines. It searches for the first RMC sentence and uses its time as reference.
+func (c *Checker) CorrectTimeStamp(ls []*model.LogLine) ([]*model.LogLine, error) {
+	// get first RMC for getting the right time information
+	td := time.Time{}
+	found := false
+	for _, ll := range ls {
+		ts, ok := c.getRMCTime(ll, td)
+		if ok {
+			found = true
+			ll.CorrectTimeStamp = ts
+			td = ts.Add(-ll.Duration)
+			break
+		}
+	}
+	if found {
+		c.log.Infof("reference time found: %s", td.String())
+	} else {
+		c.log.Infof("no reference time found")
+	}
+
+	// setting the timestamp right
+	for _, ll := range ls {
+		ts, ok := c.getRMCTime(ll, td)
+		if ok {
+			ll.CorrectTimeStamp = ts
+			td = ts.Add(-ll.Duration)
+		} else {
+			ll.CorrectTimeStamp = td.Add(ll.Duration)
+		}
+	}
+
+	return ls, nil
+}
+
+func (c *Checker) getRMCTime(ll *model.LogLine, ts time.Time) (time.Time, bool) {
+	newTime := false
+	if ll.NMEAMessage != nil {
+		if ll.NMEAMessage.Prefix() == "GPRMC" {
+			rmc, ok := ll.NMEAMessage.(nmea.RMC)
+			if ok {
+				ts = nmea.DateTime(0, rmc.Date, rmc.Time)
+				newTime = true
+			}
+		}
+	}
+	return ts, newTime
+}
+
+func (c *Checker) outputToFolder(fr *model.FileResult, lf, of string, ls []*model.LogLine, overwrite bool) error {
 	vesselID, ft := c.getFileInfo(ls)
 	filedate := ft.Format(fmtDateOnly)
 	ofn := fmt.Sprintf("%d-%s-%s.nmea", vesselID, utils.FileNameWithoutExtension(filepath.Base(lf)), filedate)
@@ -145,7 +200,7 @@ func (c *Checker) outputToFolder(fr *model.FileResult, lf, of string, ls []model
 		return errors.Join(ErrOutputfileAlreadyExists, fmt.Errorf("output file name: %s", off))
 	}
 	fr.WithFilename(ofn).WithVesselID(vesselID).WithCreated(ft)
-	fo, err := os.OpenFile(off, os.O_CREATE, os.ModePerm)
+	fo, err := os.Create(off)
 	if err != nil {
 		return err
 	}
@@ -158,31 +213,25 @@ func (c *Checker) outputToFolder(fr *model.FileResult, lf, of string, ls []model
 	}()
 
 	for _, ll := range ls {
-		fo.WriteString(fmt.Sprintf("%s;%s;", ll.Timestamp, ll.Channel))
-		if ll.NMEAMessage != nil {
-			fo.WriteString(ll.NMEAMessage.String())
-		} else {
-			fo.WriteString(ll.Unknown)
-		}
-		fo.WriteString("\r\n")
+		fo.WriteString(fmt.Sprintf("%s\r\n", ll.NMEAString()))
 	}
 	c.log.Infof("writing clean up file to %s", off)
 	return nil
 }
 
-func (c *Checker) getFileInfo(ls []model.LogLine) (vesselID int64, creationDate time.Time) {
+func (c *Checker) getFileInfo(ls []*model.LogLine) (vesselID int64, creationDate time.Time) {
 	creationDate = time.Now()
 	vesselID = int64(0)
 	dateFound := false
 	vesselFound := false
 	for _, ll := range ls {
 		if ll.NMEAMessage != nil {
-			tt, ok := c.processRMC(ll, dateFound)
+			tt, ok := c.processRMC(*ll, dateFound)
 			if ok {
 				creationDate = tt
 				dateFound = true
 			}
-			vid, ok := c.processCFG(ll, vesselFound)
+			vid, ok := c.processCFG(*ll, vesselFound)
 			if ok {
 				vesselID = vid
 				vesselFound = true
@@ -219,6 +268,7 @@ func (c *Checker) processCFG(ll model.LogLine, found bool) (vesselID int64, ok b
 	return
 }
 
+// WriteResult writes the check result to a json file in the output folder
 func (c *Checker) WriteResult(of string, res model.CheckResult) error {
 	fn := filepath.Join(of, "report.json")
 	return os.WriteFile(fn, []byte(res.String()), os.ModePerm)

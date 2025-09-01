@@ -12,15 +12,32 @@ This is a typically copy/run program. Simply unzip into a folder and you can use
 ## Check
 This will check all files in the sd card folder and write the cleaned files to the output folder. Different errors and warnings will be reported.
 Syntax: 
-`osml check -d <sd card folder> -f <output folder> [-v] [-o] [-r <report name>]`
+`osml check -s <sd card folder> -o <output folder> [-v] [-w] [-r <report name>]`
 
--d: folder with the files of the sd card
--f: output folder, where all processed files will be stored
--o: the tool will overwrite existing files
+-s: folder with the files of the sd card
+-o: output folder, where all processed files will be stored
+-w: the tool will overwrite existing files
 -v: verbose will add more logging output.
 -r: the tool will generate a json output file named `report.json` with some additional data
 
 ### Processing
 First all files of the sd card folder will be parsed, filtered and written to the output folder. Naming of the new files will be
 `<vessel id>-<number of file>-<creation date (first GPRMC sentence. in file)>.dat`
-After that the tool try to set the creation and change date of the file to the first date found in the nmea sentences. Than , if requested, `osml` will generate the report.
+After that the tool try to set the creation and change date of the file to the first date found in the nmea sentences. Based on this, all sentences are than added a correct timestamp. Than , if requested, `osml` will generate the report.
+
+## Export
+
+This command will first check all files on sd card (like check but without outputting the intermediate files) and will than generate track files for every track in the desired format.
+
+Syntax
+
+`osml export -s <sd card folder> -o <output folder> [-v] [-f]`
+
+-d: folder with the files of the sd card
+-o: output folder, where all processed files will be stored
+-f: the output format, available formats: Defaults to NMEA, also available: GPX(not implemented yet), KML(not implemented yet)
+-v: verbose will add more logging output.
+
+### Processing
+
+see check, after all sentences are collected, tracks are builded (based on the corrected timestamp) and every track is written to a file named `track_<tracknumber>.<format>`
