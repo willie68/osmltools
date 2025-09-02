@@ -23,7 +23,11 @@ require (
 	github.com/samber/go-type-to-string v1.8.0 // indirect
 	github.com/sergi/go-diff v1.0.0 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
-	golang.org/x/crypto v0.0.0-20190426145343-a29dc8fdc734 // indirect
+	github.com/twpayne/go-geom v1.6.1 // indirect
+	github.com/twpayne/go-gpx v1.5.0 // indirect
+	golang.org/x/crypto v0.41.0 // indirect
+	golang.org/x/net v0.43.0 // indirect
+	golang.org/x/text v0.28.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 

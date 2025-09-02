@@ -10,6 +10,8 @@ import (
 
 	"github.com/samber/do/v2"
 	"github.com/willie68/osmltools/internal/check"
+	"github.com/willie68/osmltools/internal/export/gpxexporter"
+	"github.com/willie68/osmltools/internal/export/nmeaexporter"
 	"github.com/willie68/osmltools/internal/logging"
 	"github.com/willie68/osmltools/internal/model"
 	"github.com/willie68/osmltools/internal/osml"
@@ -22,6 +24,9 @@ const (
 )
 
 var (
+	// ErrUnknownExporter error for unknown exporter
+	ErrUnknownExporter = fmt.Errorf("unknown exporter")
+	// SupportedFormats all supported export formats
 	SupportedFormats = []string{NMEAFormat, GPXFormat, KMLFormat}
 )
 
@@ -88,14 +93,17 @@ func (e *Exporter) exportFile(ls []*model.LogLine, count int, outTempl string, f
 		return ls[i].CorrectTimeStamp.Before(ls[j].CorrectTimeStamp)
 	})
 
-	fs, err := os.Create(fmt.Sprintf(outTempl, count))
-	if err != nil {
-		return err
+	of := fmt.Sprintf(outTempl, count)
+	tr := model.Track{
+		Name:     fmt.Sprintf("Track %04d", count),
+		LogLines: ls,
 	}
-	defer fs.Close()
-	for _, ll := range ls {
-		fmt.Fprintln(fs, ll.NMEAString())
+
+	switch format {
+	case NMEAFormat:
+		return nmeaexporter.New().ExportTrack(tr, of)
+	case GPXFormat:
+		return gpxexporter.New().ExportTrack(tr, of)
 	}
-	e.log.Infof("output file written with %d sentences", len(ls))
-	return nil
+	return ErrUnknownExporter
 }
