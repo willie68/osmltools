@@ -8,8 +8,14 @@ mostly written in go, this small tool is for working with the data files from th
 # Install
 This is a typically copy/run program. Simply unzip into a folder and you can use it. For easier use, you should save the program to a path that is already entered in the system path, or you can enter the extraction path there.
 
+## Update
+
+If you want to update your version, just download the latest version from my GitHub repository and unzip it into the previous folder.
+
 # Usage
+
 ## Check
+
 This will check all files in the sd card folder and write the cleaned files to the output folder. Different errors and warnings will be reported.
 Syntax: 
 `osml check -s <sd card folder> -o <output folder> [-v] [-w] [-r <report name>]`
@@ -35,7 +41,7 @@ Syntax
 
 -d: folder with the files of the sd card
 -o: output folder, where all processed files will be stored
--f: the output format, available formats: Defaults to NMEA, also available: GPX(not implemented yet), KML(not implemented yet)
+-f: the output format, available formats: Defaults to NMEA, also available: GPX, KML(not implemented yet)
 -v: verbose will add more logging output.
 
 ### Processing
