@@ -20,18 +20,12 @@ type GPXExporter struct {
 
 func New() *GPXExporter {
 	return &GPXExporter{
-		log: *logging.New().WithName("NMEAExporter"),
+		log: *logging.New().WithName("GPXExporter"),
 	}
 }
 
 func (e *GPXExporter) ExportTrack(track model.Track, outputfile string) error {
 	e.log.Infof("exporting %d loglines to gpx file %s", len(track.LogLines), outputfile)
-
-	fs, err := os.Create(outputfile)
-	if err != nil {
-		return err
-	}
-	defer fs.Close()
 
 	g := NewGPX()
 
@@ -109,6 +103,12 @@ func (e *GPXExporter) ExportTrack(track model.Track, outputfile string) error {
 	}
 	g.XMLAttrs = make(map[string]string)
 	g.XMLAttrs["xmlns:gpxx"] = "http://www.garmin.com/xmlschemas/GpxExtensionsv3.xsd"
+
+	fs, err := os.Create(outputfile)
+	if err != nil {
+		return err
+	}
+	defer fs.Close()
 
 	if _, err := fmt.Fprint(fs, xml.Header); err != nil {
 		return err

@@ -37,7 +37,9 @@
                 "-o",
                 "./testdata/tmp/",
                 "-f",
-                "gpx"
+                "kml",
+                "-n",
+                "my new track"
             ]
         }
     ]

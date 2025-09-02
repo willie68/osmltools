@@ -55,6 +55,8 @@ github.com/twpayne/go-geom v1.6.1 h1:iLE+Opv0Ihm/ABIcvQFGIiFBXd76oBIar9drAwHFhR4
 github.com/twpayne/go-geom v1.6.1/go.mod h1:Kr+Nly6BswFsKM5sd31YaoWS5PeDDH2NftJTK7Gd028=
 github.com/twpayne/go-gpx v1.5.0 h1:HvFSJ+0r0sbhOQ8mTvd0/n0FhcgjTFsKQGG6o7PV6G4=
 github.com/twpayne/go-gpx v1.5.0/go.mod h1:vjvu/125399qj6k+px2v2v8dm08DM4I4dFBJmHHt2TE=
+github.com/twpayne/go-kml/v3 v3.3.0 h1:BytZ1F9wFe8WsgeNAQ+7/XeqqYAh72n3aECtp0kiixs=
+github.com/twpayne/go-kml/v3 v3.3.0/go.mod h1:nlEGIr3NcZ5OP2Hv16oD6V9zo3gPVii5rde+0S5IQY8=
 go.yaml.in/yaml/v3 v3.0.4 h1:tfq32ie2Jv2UxXFdLJdh3jXuOzWiL1fo0bu/FbuKpbc=
 go.yaml.in/yaml/v3 v3.0.4/go.mod h1:DhzuOOF2ATzADvBadXxruRBLzYTpT36CKvDb3+aBEFg=
 golang.org/x/crypto v0.41.0 h1:WKYxWedPGCTVVl5+WHSSrOBT0O8lx32+zxmHxijgXp4=

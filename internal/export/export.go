@@ -11,7 +11,9 @@ import (
 	"github.com/samber/do/v2"
 	"github.com/willie68/osmltools/internal/check"
 	"github.com/willie68/osmltools/internal/export/gpxexporter"
+	"github.com/willie68/osmltools/internal/export/kmlexporter"
 	"github.com/willie68/osmltools/internal/export/nmeaexporter"
+	"github.com/willie68/osmltools/internal/interfaces"
 	"github.com/willie68/osmltools/internal/logging"
 	"github.com/willie68/osmltools/internal/model"
 	"github.com/willie68/osmltools/internal/osml"
@@ -33,6 +35,7 @@ var (
 type Exporter struct {
 	log logging.Logger
 	chk check.Checker
+	exp interfaces.FormatExporter
 }
 
 func Init(inj do.Injector) {
@@ -44,9 +47,16 @@ func Init(inj do.Injector) {
 }
 
 // Export get the exporter and execute it on the sd file set
-func (e *Exporter) Export(sdCardFolder, outputFolder, format string) error {
+func (e *Exporter) Export(sdCardFolder, outputFolder, format, name string) error {
 	outTempl := filepath.Join(outputFolder, fmt.Sprintf("track_%%04d.%s", strings.ToLower(format)))
 	e.log.Infof("exporter called: sd %s, out: %s, format: %s", sdCardFolder, outTempl, format)
+
+	exp, err := e.checkExporter(format)
+	if err != nil {
+		return err
+	}
+	e.exp = exp
+
 	files, err := osml.GetDataFiles(sdCardFolder)
 	if err != nil {
 		return err
@@ -77,7 +87,7 @@ func (e *Exporter) Export(sdCardFolder, outputFolder, format string) error {
 			} else {
 				if lss[0].CorrectTimeStamp.Sub(today).Hours() > 24 {
 					ls = append(ls, lss...)
-					e.exportFile(ls, count, outTempl, format)
+					e.exportFile(ls, count, outTempl, name)
 					ls = make([]*model.LogLine, 0)
 					count++
 				}
@@ -85,25 +95,33 @@ func (e *Exporter) Export(sdCardFolder, outputFolder, format string) error {
 		}
 		ls = append(ls, lss...)
 	}
-	return e.exportFile(ls, count, outTempl, format)
+	return e.exportFile(ls, count, outTempl, name)
 }
 
-func (e *Exporter) exportFile(ls []*model.LogLine, count int, outTempl string, format string) error {
+func (e *Exporter) exportFile(ls []*model.LogLine, count int, outTempl, name string) error {
 	sort.Slice(ls, func(i, j int) bool {
 		return ls[i].CorrectTimeStamp.Before(ls[j].CorrectTimeStamp)
 	})
-
+	if name == "" {
+		name = fmt.Sprintf("Track %04d", count)
+	}
 	of := fmt.Sprintf(outTempl, count)
 	tr := model.Track{
-		Name:     fmt.Sprintf("Track %04d", count),
+		Name:     name,
 		LogLines: ls,
 	}
 
+	return e.exp.ExportTrack(tr, of)
+}
+
+func (e *Exporter) checkExporter(format string) (interfaces.FormatExporter, error) {
 	switch format {
 	case NMEAFormat:
-		return nmeaexporter.New().ExportTrack(tr, of)
+		return nmeaexporter.New(), nil
 	case GPXFormat:
-		return gpxexporter.New().ExportTrack(tr, of)
+		return gpxexporter.New(), nil
+	case KMLFormat:
+		return kmlexporter.New(), nil
 	}
-	return ErrUnknownExporter
+	return nil, ErrUnknownExporter
 }
