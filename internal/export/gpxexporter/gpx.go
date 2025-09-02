@@ -49,6 +49,7 @@ func (e *GPXExporter) ExportTrack(track model.Track, outputfile string) error {
 						Lon:   rmc.Longitude,
 						Time:  ll.CorrectTimeStamp,
 						Speed: rmc.Speed,
+						Ele:   0.0,
 					}
 					wpts = append(wpts, lastwpt)
 					if startwpt == nil {
@@ -60,7 +61,9 @@ func (e *GPXExporter) ExportTrack(track model.Track, outputfile string) error {
 				if ll.NMEAMessage.Prefix() == "GPGGA" {
 					gga, ok := ll.NMEAMessage.(nmea.GGA)
 					if ok {
-						lastwpt.Ele = gga.Altitude
+						if lastwpt.Ele == 0.0 {
+							lastwpt.Ele = gga.Altitude
+						}
 					}
 				}
 
