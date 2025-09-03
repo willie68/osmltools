@@ -86,23 +86,24 @@ func (e *Exporter) Export(sdCardFolder, outputFolder, format, name string) error
 		if err != nil {
 			return err
 		}
-		lss, err = e.chk.CorrectTimeStamp(lss)
+		lss, _, err = e.chk.CorrectTimeStamp(lss)
 		if err != nil {
 			return err
 		}
 		if len(lss) > 0 {
-			processedFiles = append(processedFiles, lf)
 			if today.IsZero() {
 				today = lss[0].CorrectTimeStamp
 			} else {
 				if lss[0].CorrectTimeStamp.Sub(today).Hours() > 24 {
-					ls = append(ls, lss...)
 					e.exportFile(ls, count, outTempl, name, processedFiles)
 					processedFiles = make([]string, 0)
 					ls = make([]*model.LogLine, 0)
+					processedFiles = append(processedFiles, lf)
+					ls = append(ls, lss...)
 					count++
 				}
 			}
+			processedFiles = append(processedFiles, lf)
 			ls = append(ls, lss...)
 		}
 	}

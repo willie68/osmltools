@@ -89,10 +89,15 @@ func (f *FileResult) WithOrigin(fn string) *FileResult {
 	return f
 }
 
-func (f *FileResult) WithErros(errs []string) *FileResult {
+func (f *FileResult) WithErrors(errs []string) *FileResult {
 	f.Errors = errs
 	f.ErrorCount = len(errs)
 	return f
+}
+
+func (f *FileResult) AddErrors(errs ...string) {
+	f.Errors = append(f.Errors, errs...)
+	f.ErrorCount = len(f.Errors)
 }
 
 func (f *FileResult) WithWarnings(wrns []string) *FileResult {

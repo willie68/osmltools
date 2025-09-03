@@ -85,12 +85,21 @@ func (c *Checker) checkFile(loggerfile string, result *model.CheckResult, output
 	if err != nil {
 		return err
 	}
-	ls, err = c.CorrectTimeStamp(ls)
+	ls, ok, err := c.CorrectTimeStamp(ls)
 	if err != nil {
 		return err
 	}
-	err = c.outputToFolder(fr, loggerfile, outputFolder, ls, overwrite)
+	if len(ls) == 0 {
+		c.log.Infof("no valid nmea lines found in file %s", loggerfile)
+		fr.AddErrors(fmt.Sprintf("no valid nmea lines found in file %s", loggerfile))
+		return nil
+	}
+	if !ok {
+		c.log.Infof("no valid time stamp found in file %s", loggerfile)
+		fr.AddErrors(fmt.Sprintf("no valid time stamp found in file %s", loggerfile))
+	}
 	if err != nil {
+		err = c.outputToFolder(fr, loggerfile, outputFolder, ls, overwrite)
 		return err
 	}
 	c.log.Infof("file parsed with %d errors and %d unknown tags", c.ErrorTags-set, c.UnknownTags-sut)
@@ -144,7 +153,7 @@ func (c *Checker) AnalyseLoggerFile(fr *model.FileResult, lf string) ([]*model.L
 }
 
 // CorrectTimeStamp corrects the timestamp of the log lines. It searches for the first RMC sentence and uses its time as reference.
-func (c *Checker) CorrectTimeStamp(ls []*model.LogLine) ([]*model.LogLine, error) {
+func (c *Checker) CorrectTimeStamp(ls []*model.LogLine) ([]*model.LogLine, bool, error) {
 	// get first RMC for getting the right time information
 	td := time.Time{}
 	found := false
@@ -174,7 +183,7 @@ func (c *Checker) CorrectTimeStamp(ls []*model.LogLine) ([]*model.LogLine, error
 		}
 	}
 
-	return ls, nil
+	return ls, found, nil
 }
 
 func (c *Checker) getRMCTime(ll *model.LogLine, ts time.Time) (time.Time, bool) {

@@ -42,10 +42,31 @@ type OSMACC struct {
 	ZAcc int64
 }
 
+// $POSMVCC,5073,4873*5E
+type OSMVCC struct {
+	nmea.BaseSentence
+	Voltage     int64
+	NormVoltage int64
+}
+
 // $POSMSO,Reason: times up*4C
 type OSMSO struct {
 	nmea.BaseSentence
 	Message string
+}
+
+// $PGRMM,WGS 84*06
+type GRMM struct {
+	nmea.BaseSentence
+	Mapdate string
+}
+
+// $PGRMZ,20,f,3*29
+type GRMZ struct {
+	nmea.BaseSentence
+	Altitude int64
+	Unit     string
+	Fixtype  int64
 }
 
 var (
@@ -87,11 +108,11 @@ func init() {
 		return OSMCFG{
 			BaseSentence: s,
 			BaudA:        p.Int64(0, "bauda"),
-			BaudB:        p.Int64(0, "baudb"),
-			Seatalk:      p.Int64(0, "seatalk"),
-			Outputs:      p.Int64(0, "outputs"),
-			VesselID:     p.HexInt64(0, "vesselid"),
-			BootLoader:   p.Int64(0, "bootloader"),
+			BaudB:        p.Int64(1, "baudb"),
+			Seatalk:      p.Int64(2, "seatalk"),
+			Outputs:      p.Int64(3, "outputs"),
+			VesselID:     p.HexInt64(4, "vesselid"),
+			BootLoader:   p.Int64(5, "bootloader"),
 		}, p.Err()
 	}
 
@@ -100,8 +121,8 @@ func init() {
 		return OSMGYR{
 			BaseSentence: s,
 			XAxis:        p.Int64(0, "xaxis"),
-			YAxis:        p.Int64(0, "yaxis"),
-			ZAxis:        p.Int64(0, "zaxis"),
+			YAxis:        p.Int64(1, "yaxis"),
+			ZAxis:        p.Int64(2, "zaxis"),
 		}, p.Err()
 	}
 
@@ -110,8 +131,35 @@ func init() {
 		return OSMACC{
 			BaseSentence: s,
 			XAcc:         p.Int64(0, "xacc"),
-			YAcc:         p.Int64(0, "yacc"),
-			ZAcc:         p.Int64(0, "zacc"),
+			YAcc:         p.Int64(1, "yacc"),
+			ZAcc:         p.Int64(2, "zacc"),
+		}, p.Err()
+	}
+
+	sp.CustomParsers["OSMVCC"] = func(s nmea.BaseSentence) (nmea.Sentence, error) {
+		p := nmea.NewParser(s)
+		return OSMVCC{
+			BaseSentence: s,
+			Voltage:      p.Int64(0, "voltage"),
+			NormVoltage:  p.Int64(1, "normvoltage"),
+		}, p.Err()
+	}
+
+	sp.CustomParsers["GRMM"] = func(s nmea.BaseSentence) (nmea.Sentence, error) {
+		p := nmea.NewParser(s)
+		return GRMM{
+			BaseSentence: s,
+			Mapdate:      p.String(0, "mapdate"),
+		}, p.Err()
+	}
+
+	sp.CustomParsers["GRMZ"] = func(s nmea.BaseSentence) (nmea.Sentence, error) {
+		p := nmea.NewParser(s)
+		return GRMZ{
+			BaseSentence: s,
+			Altitude:     p.Int64(0, "altitude"),
+			Unit:         p.String(1, "unit"),
+			Fixtype:      p.Int64(2, "fixtype"),
 		}, p.Err()
 	}
 

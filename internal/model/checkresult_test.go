@@ -40,7 +40,7 @@ func TestCeckResultJSON(t *testing.T) {
 		WithFilename("filename").
 		WithOrigin("origin").
 		WithVesselID(1234).
-		WithErros([]string{"error"}).
+		WithErrors([]string{"error"}).
 		WithWarnings([]string{"warning"})
 
 	ast.Equal(time.Time{}, fs.Created)
