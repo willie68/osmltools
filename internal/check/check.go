@@ -220,7 +220,7 @@ func (c *Checker) outputToFolder(fr *model.FileResult, lf, of string, ls []*mode
 }
 
 func (c *Checker) getFileInfo(ls []*model.LogLine) (vesselID int64, creationDate time.Time) {
-	creationDate = time.Now()
+	creationDate = time.Time{}
 	vesselID = int64(0)
 	dateFound := false
 	vesselFound := false

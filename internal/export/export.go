@@ -1,6 +1,7 @@
 package export
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -33,15 +34,22 @@ var (
 )
 
 type Exporter struct {
-	log logging.Logger
-	chk check.Checker
-	exp interfaces.FormatExporter
+	log    logging.Logger
+	chk    check.Checker
+	exp    interfaces.FormatExporter
+	tracks map[string]trackData
+}
+
+type trackData struct {
+	Name  string
+	Files []string
 }
 
 func Init(inj do.Injector) {
 	exp := Exporter{
-		log: *logging.New().WithName("Exporter"),
-		chk: do.MustInvoke[check.Checker](inj),
+		log:    *logging.New().WithName("Exporter"),
+		chk:    do.MustInvoke[check.Checker](inj),
+		tracks: make(map[string]trackData),
 	}
 	do.ProvideValue(inj, exp)
 }
@@ -70,6 +78,7 @@ func (e *Exporter) Export(sdCardFolder, outputFolder, format, name string) error
 	ls := make([]*model.LogLine, 0)
 	count := 0
 	today := time.Time{}
+	processedFiles := make([]string, 0)
 
 	for _, lf := range files {
 		e.log.Infof("analysing file: %s", lf)
@@ -82,23 +91,36 @@ func (e *Exporter) Export(sdCardFolder, outputFolder, format, name string) error
 			return err
 		}
 		if len(lss) > 0 {
+			processedFiles = append(processedFiles, lf)
 			if today.IsZero() {
 				today = lss[0].CorrectTimeStamp
 			} else {
 				if lss[0].CorrectTimeStamp.Sub(today).Hours() > 24 {
 					ls = append(ls, lss...)
-					e.exportFile(ls, count, outTempl, name)
+					e.exportFile(ls, count, outTempl, name, processedFiles)
+					processedFiles = make([]string, 0)
 					ls = make([]*model.LogLine, 0)
 					count++
 				}
 			}
+			ls = append(ls, lss...)
 		}
-		ls = append(ls, lss...)
 	}
-	return e.exportFile(ls, count, outTempl, name)
+	err = e.exportFile(ls, count, outTempl, name, processedFiles)
+	if err != nil {
+		return err
+	}
+
+	js, err := json.Marshal(e.tracks)
+	if err != nil {
+		return err
+	}
+	of := filepath.Join(outputFolder, "tracks.json")
+	err = os.WriteFile(of, js, os.ModePerm)
+	return err
 }
 
-func (e *Exporter) exportFile(ls []*model.LogLine, count int, outTempl, name string) error {
+func (e *Exporter) exportFile(ls []*model.LogLine, count int, outTempl, name string, filelist []string) error {
 	sort.Slice(ls, func(i, j int) bool {
 		return ls[i].CorrectTimeStamp.Before(ls[j].CorrectTimeStamp)
 	})
@@ -111,6 +133,13 @@ func (e *Exporter) exportFile(ls []*model.LogLine, count int, outTempl, name str
 		LogLines: ls,
 	}
 
+	fn := filepath.Base(of)
+	e.tracks[fn] = trackData{
+		Name:  name,
+		Files: filelist,
+	}
+
+	e.log.Infof("exporting %d loglines to %s", len(ls), of)
 	return e.exp.ExportTrack(tr, of)
 }
 
