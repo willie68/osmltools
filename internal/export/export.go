@@ -24,13 +24,14 @@ const (
 	NMEAFormat = "NMEA"
 	GPXFormat  = "GPX"
 	KMLFormat  = "KML"
+	KMZFormat  = "KMZ"
 )
 
 var (
 	// ErrUnknownExporter error for unknown exporter
 	ErrUnknownExporter = fmt.Errorf("unknown exporter")
 	// SupportedFormats all supported export formats
-	SupportedFormats = []string{NMEAFormat, GPXFormat, KMLFormat}
+	SupportedFormats = []string{NMEAFormat, GPXFormat, KMLFormat, KMZFormat}
 )
 
 type Exporter struct {
@@ -152,6 +153,8 @@ func (e *Exporter) checkExporter(format string) (interfaces.FormatExporter, erro
 		return gpxexporter.New(), nil
 	case KMLFormat:
 		return kmlexporter.New(), nil
+	case KMZFormat:
+		return kmlexporter.New().WithCompressed(true), nil
 	}
 	return nil, ErrUnknownExporter
 }

@@ -37,12 +37,13 @@ This command will first check all files on sd card (like check but without outpu
 
 Syntax
 
-`osml export -s <sd card folder> -o <output folder> [-v] [-f]`
+`osml export -s <sd card folder> -o <output folder> [-v] [-f <format>] [-n <name>]`
 
 -d: folder with the files of the sd card
 -o: output folder, where all processed files will be stored
--f: the output format, available formats: Defaults to NMEA, also available: GPX, KML(not implemented yet)
+-f: the output format, available formats: Defaults to NMEA, also available: GPX, KML, KMZ
 -v: verbose will add more logging output.
+-n: additional name used in gpx and km# formats for naming the track
 
 ### Processing
 

@@ -7,6 +7,7 @@ import (
 
 	"github.com/adrianmo/go-nmea"
 	"github.com/twpayne/go-kml/v3"
+	"github.com/willie68/osmltools/internal/export/kmlexporter/kmz"
 	"github.com/willie68/osmltools/internal/interfaces"
 	"github.com/willie68/osmltools/internal/logging"
 	"github.com/willie68/osmltools/internal/model"
@@ -15,7 +16,8 @@ import (
 var _ interfaces.FormatExporter = &KMLExporter{}
 
 type KMLExporter struct {
-	log logging.Logger
+	log        logging.Logger
+	compressed bool
 }
 
 type waypoint struct {
@@ -30,8 +32,14 @@ type waypoint struct {
 
 func New() *KMLExporter {
 	return &KMLExporter{
-		log: *logging.New().WithName("KMLExporter"),
+		log:        *logging.New().WithName("KMLExporter"),
+		compressed: false,
 	}
+}
+
+func (e *KMLExporter) WithCompressed(compressed bool) *KMLExporter {
+	e.compressed = compressed
+	return e
 }
 
 func (e *KMLExporter) ExportTrack(track model.Track, outputfile string) error {
@@ -119,22 +127,28 @@ func (e *KMLExporter) ExportTrack(track model.Track, outputfile string) error {
 			Alt: -wpt.Depth,
 		}))
 	}
-	k := kml.KML(
-		kml.Document(
+	var kd kml.Element
+	kd = kml.Document(
+		kml.Name(track.Name),
+		kml.Description(fmt.Sprintf("Exported with osmltools - %d points", len(kos))),
+		kml.Placemark(
 			kml.Name(track.Name),
-			kml.Description(fmt.Sprintf("Exported with osmltools - %d points", len(kos))),
-			kml.Placemark(
-				kml.Name(track.Name),
-				kml.LineString(kml.Coordinates(kos...)),
-			),
-			kml.Placemark(
-				kml.Name("Water depth profile"),
-				kml.GxTrack(gxkos...),
-			),
+			kml.LineString(kml.Coordinates(kos...)),
+		),
+		kml.Placemark(
+			kml.Name("Water depth profile"),
+			kml.GxTrack(gxkos...),
 		),
 	)
-	if err := k.WriteIndent(fs, "", "  "); err != nil {
-		return err
+
+	if e.compressed {
+		if err := kmz.NewKMZ(kd).WriteIndent(fs, "", "  "); err != nil {
+			return err
+		}
+	} else {
+		if err := kml.KML(kd).WriteIndent(fs, "", "  "); err != nil {
+			return err
+		}
 	}
 
 	e.log.Info("output file written")
