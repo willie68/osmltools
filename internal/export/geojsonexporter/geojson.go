@@ -52,12 +52,14 @@ func (e *GeoJSONExporter) ExportTrack(track model.Track, outputfile string) erro
 		Geometry: geom.NewPointFlat(geom.XY, []float64{track.Start.Lon, track.Start.Lat}),
 		Properties: map[string]any{
 			"name": "start",
+			"time": track.Start.Time.Format("2006-01-02T15:04:05Z"),
 		},
 	}
 	te := &geojson.Feature{
 		Geometry: geom.NewPointFlat(geom.XY, []float64{track.End.Lon, track.End.Lat}),
 		Properties: map[string]any{
 			"name": "end",
+			"time": track.End.Time.Format("2006-01-02T15:04:05Z"),
 		},
 	}
 

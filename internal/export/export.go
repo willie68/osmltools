@@ -180,7 +180,8 @@ func (e *Exporter) GetWaypoints(track *model.Track) (*model.Track, error) {
 
 	for _, ll := range track.LogLines {
 		if ll.NMEAMessage != nil {
-			if ll.NMEAMessage.Prefix() == "GPRMC" {
+			switch ll.NMEAMessage.Prefix() {
+			case "GPRMC":
 				rmc, ok := ll.NMEAMessage.(nmea.RMC)
 				if ok && rmc.Validity == "A" { // only valid
 					track.End = &model.Waypoint{
@@ -195,9 +196,8 @@ func (e *Exporter) GetWaypoints(track *model.Track) (*model.Track, error) {
 						track.Start = track.End
 					}
 				}
-			}
-			if track.End != nil {
-				if ll.NMEAMessage.Prefix() == "GPGGA" {
+			case "GPGGA":
+				if track.End != nil {
 					gga, ok := ll.NMEAMessage.(nmea.GGA)
 					if ok {
 						if track.End.Ele == 0.0 {
@@ -205,25 +205,26 @@ func (e *Exporter) GetWaypoints(track *model.Track) (*model.Track, error) {
 						}
 					}
 				}
-
-				depth := 0.0
-				if ll.NMEAMessage.Prefix() == "SDDBT" {
+			case "SDDBT":
+				if track.End != nil {
 					dbt, ok := ll.NMEAMessage.(nmea.DBT)
 					if ok {
-						depth = dbt.DepthFeet * 0.3048 // convert feet to meters
+						depth := dbt.DepthFeet * 0.3048 // convert feet to meters
+						if track.End.Depth == 0.0 {
+							track.End.Depth = depth
+						}
 					}
 				}
-				if depth == 0.0 && ll.NMEAMessage.Prefix() == "SDDPT" {
+			case "SDDPT":
+				if track.End != nil {
 					dpt, ok := ll.NMEAMessage.(nmea.DPT)
 					if ok {
-						depth = dpt.Depth
+						if track.End.Depth == 0.0 {
+							track.End.Depth = dpt.Depth
+						}
 					}
 				}
-				if depth != 0.0 && track.End.Depth == 0.0 {
-					track.End.Depth = depth
-				}
 			}
-
 		}
 	}
 	if track.Start != nil {

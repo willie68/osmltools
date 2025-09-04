@@ -21,9 +21,13 @@ Syntax:
 `osml check -s <sd card folder> -o <output folder> [-v] [-w] [-r <report name>]`
 
 -s: folder with the files of the sd card
+
 -o: output folder, where all processed files will be stored
+
 -w: the tool will overwrite existing files
+
 -v: verbose will add more logging output.
+
 -r: the tool will generate a json output file named `report.json` with some additional data
 
 ### Processing
@@ -40,10 +44,14 @@ Syntax
 `osml export -s <sd card folder> -o <output folder> [-v] [-f <format>] [-n <name>]`
 
 -d: folder with the files of the sd card
+
 -o: output folder, where all processed files will be stored
--f: the output format, available formats: Defaults to NMEA, also available: GPX, KML, KMZ
+
+-f: the output format, available formats: Defaults to NMEA, also available: GPX, KML, KMZ, GeoJSON
+
 -v: verbose will add more logging output.
--n: additional name used in gpx and km# formats for naming the track
+
+-n: additional name used in gpx, km# and GeoJSON formats for naming the track
 
 ### Processing
 
