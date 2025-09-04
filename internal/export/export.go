@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/adrianmo/go-nmea"
 	"github.com/samber/do/v2"
 	"github.com/willie68/osmltools/internal/check"
 	"github.com/willie68/osmltools/internal/export/gpxexporter"
@@ -38,10 +39,10 @@ type Exporter struct {
 	log    logging.Logger
 	chk    check.Checker
 	exp    interfaces.FormatExporter
-	tracks map[string]trackData
+	tracks map[string]trackFileData
 }
 
-type trackData struct {
+type trackFileData struct {
 	Name  string
 	Files []string
 }
@@ -50,7 +51,7 @@ func Init(inj do.Injector) {
 	exp := Exporter{
 		log:    *logging.New().WithName("Exporter"),
 		chk:    do.MustInvoke[check.Checker](inj),
-		tracks: make(map[string]trackData),
+		tracks: make(map[string]trackFileData),
 	}
 	do.ProvideValue(inj, exp)
 }
@@ -130,19 +131,23 @@ func (e *Exporter) exportFile(ls []*model.LogLine, count int, outTempl, name str
 		name = fmt.Sprintf("Track %04d", count)
 	}
 	of := fmt.Sprintf(outTempl, count)
-	tr := model.Track{
+	tr := &model.Track{
 		Name:     name,
 		LogLines: ls,
 	}
+	tr, err := e.GetWaypoints(tr)
+	if err != nil {
+		return err
+	}
 
 	fn := filepath.Base(of)
-	e.tracks[fn] = trackData{
+	e.tracks[fn] = trackFileData{
 		Name:  name,
 		Files: filelist,
 	}
 
 	e.log.Infof("exporting %d loglines to %s", len(ls), of)
-	return e.exp.ExportTrack(tr, of)
+	return e.exp.ExportTrack(*tr, of)
 }
 
 func (e *Exporter) checkExporter(format string) (interfaces.FormatExporter, error) {
@@ -157,4 +162,67 @@ func (e *Exporter) checkExporter(format string) (interfaces.FormatExporter, erro
 		return kmlexporter.New().WithCompressed(true), nil
 	}
 	return nil, ErrUnknownExporter
+}
+
+// GetWaypoints extracts the waypoints from the log lines of the track
+func (e *Exporter) GetWaypoints(track *model.Track) (*model.Track, error) {
+	e.log.Infof("extracting waypoints from %d log lines", len(track.LogLines))
+
+	track.Waypoints = make([]*model.Waypoint, 0)
+
+	for _, ll := range track.LogLines {
+		if ll.NMEAMessage != nil {
+			if ll.NMEAMessage.Prefix() == "GPRMC" {
+				rmc, ok := ll.NMEAMessage.(nmea.RMC)
+				if ok && rmc.Validity == "A" { // only valid
+					track.End = &model.Waypoint{
+						Lat:   rmc.Latitude,
+						Lon:   rmc.Longitude,
+						Time:  ll.CorrectTimeStamp,
+						Speed: rmc.Speed,
+						Ele:   0.0,
+					}
+					track.Waypoints = append(track.Waypoints, track.End)
+					if track.Start == nil {
+						track.Start = track.End
+					}
+				}
+			}
+			if track.End != nil {
+				if ll.NMEAMessage.Prefix() == "GPGGA" {
+					gga, ok := ll.NMEAMessage.(nmea.GGA)
+					if ok {
+						if track.End.Ele == 0.0 {
+							track.End.Ele = gga.Altitude
+						}
+					}
+				}
+
+				depth := 0.0
+				if ll.NMEAMessage.Prefix() == "SDDBT" {
+					dbt, ok := ll.NMEAMessage.(nmea.DBT)
+					if ok {
+						depth = dbt.DepthFeet * 0.3048 // convert feet to meters
+					}
+				}
+				if depth == 0.0 && ll.NMEAMessage.Prefix() == "SDDPT" {
+					dpt, ok := ll.NMEAMessage.(nmea.DPT)
+					if ok {
+						depth = dpt.Depth
+					}
+				}
+				if depth != 0.0 && track.End.Depth == 0.0 {
+					track.End.Depth = depth
+				}
+			}
+
+		}
+	}
+	if track.Start != nil {
+		track.Start.Name = "Start"
+	}
+	if track.End != nil {
+		track.End.Name = "End"
+	}
+	return track, nil
 }

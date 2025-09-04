@@ -3,11 +3,8 @@ package kmlexporter
 import (
 	"fmt"
 	"os"
-	"time"
 
-	"github.com/adrianmo/go-nmea"
 	"github.com/twpayne/go-kml/v3"
-	"github.com/willie68/osmltools/internal/export/kmlexporter/kmz"
 	"github.com/willie68/osmltools/internal/interfaces"
 	"github.com/willie68/osmltools/internal/logging"
 	"github.com/willie68/osmltools/internal/model"
@@ -20,16 +17,7 @@ type KMLExporter struct {
 	compressed bool
 }
 
-type waypoint struct {
-	Name  string
-	Lat   float64
-	Lon   float64
-	Time  time.Time
-	Speed float64
-	Ele   float64
-	Depth float64
-}
-
+// New returns a new KMLExporter
 func New() *KMLExporter {
 	return &KMLExporter{
 		log:        *logging.New().WithName("KMLExporter"),
@@ -37,81 +25,18 @@ func New() *KMLExporter {
 	}
 }
 
+// WithCompressed sets if the output should be compressed to a kmz file
 func (e *KMLExporter) WithCompressed(compressed bool) *KMLExporter {
 	e.compressed = compressed
 	return e
 }
 
+// ExportTrack exports the given track to a kml or kmz file
 func (e *KMLExporter) ExportTrack(track model.Track, outputfile string) error {
 	e.log.Infof("exporting %d loglines to kml file %s", len(track.LogLines), outputfile)
 
-	wpts := make([]*waypoint, 0)
-	var lastwpt *waypoint
-	var startwpt *waypoint
-
-	for _, ll := range track.LogLines {
-		if ll.NMEAMessage != nil {
-			if ll.NMEAMessage.Prefix() == "GPRMC" {
-				rmc, ok := ll.NMEAMessage.(nmea.RMC)
-				if ok && rmc.Validity == "A" { // only valid
-					lastwpt = &waypoint{
-						Lat:   rmc.Latitude,
-						Lon:   rmc.Longitude,
-						Time:  ll.CorrectTimeStamp,
-						Speed: rmc.Speed,
-						Ele:   0.0,
-					}
-					wpts = append(wpts, lastwpt)
-					if startwpt == nil {
-						startwpt = lastwpt
-					}
-				}
-			}
-			if lastwpt != nil {
-				if ll.NMEAMessage.Prefix() == "GPGGA" {
-					gga, ok := ll.NMEAMessage.(nmea.GGA)
-					if ok {
-						if lastwpt.Ele == 0.0 {
-							lastwpt.Ele = gga.Altitude
-						}
-					}
-				}
-
-				depth := 0.0
-				if ll.NMEAMessage.Prefix() == "SDDBT" {
-					dbt, ok := ll.NMEAMessage.(nmea.DBT)
-					if ok {
-						depth = dbt.DepthFeet * 0.3048 // convert feet to meters
-					}
-				}
-				if depth == 0.0 && ll.NMEAMessage.Prefix() == "SDDPT" {
-					dpt, ok := ll.NMEAMessage.(nmea.DPT)
-					if ok {
-						depth = dpt.Depth
-					}
-				}
-				if depth != 0.0 && lastwpt.Depth == 0.0 {
-					lastwpt.Depth = depth
-				}
-			}
-
-		}
-	}
-	if startwpt != nil {
-		startwpt.Name = "Start"
-	}
-	if lastwpt != nil {
-		lastwpt.Name = "End"
-	}
-
-	fs, err := os.Create(outputfile)
-	if err != nil {
-		return err
-	}
-	defer fs.Close()
-
 	kos := make([]kml.Coordinate, 0)
-	for _, wpt := range wpts {
+	for _, wpt := range track.Waypoints {
 		kos = append(kos, kml.Coordinate{
 			Lon: wpt.Lon,
 			Lat: wpt.Lat,
@@ -120,15 +45,15 @@ func (e *KMLExporter) ExportTrack(track model.Track, outputfile string) error {
 	}
 
 	gxkos := make([]kml.Element, 0)
-	for _, wpt := range wpts {
+	for _, wpt := range track.Waypoints {
 		gxkos = append(gxkos, kml.GxCoord(kml.Coordinate{
 			Lon: wpt.Lon,
 			Lat: wpt.Lat,
 			Alt: -wpt.Depth,
 		}))
 	}
-	var kd kml.Element
-	kd = kml.Document(
+
+	kd := kml.KML(kml.Document(
 		kml.Name(track.Name),
 		kml.Description(fmt.Sprintf("Exported with osmltools - %d points", len(kos))),
 		kml.Placemark(
@@ -139,10 +64,16 @@ func (e *KMLExporter) ExportTrack(track model.Track, outputfile string) error {
 			kml.Name("Water depth profile"),
 			kml.GxTrack(gxkos...),
 		),
-	)
+	))
+
+	fs, err := os.Create(outputfile)
+	if err != nil {
+		return err
+	}
+	defer fs.Close()
 
 	if e.compressed {
-		if err := kmz.NewKMZ(kd).WriteIndent(fs, "", "  "); err != nil {
+		if err := kml.WriteKMZ(fs, map[string]any{"doc.kml": kd}); err != nil {
 			return err
 		}
 	} else {
