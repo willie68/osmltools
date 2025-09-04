@@ -111,12 +111,13 @@ func (e *Exporter) Export(sdCardFolder, outputFolder, format, name string) error
 			ls = append(ls, lss...)
 		}
 	}
+
 	err = e.exportFile(ls, count, outTempl, name, processedFiles)
 	if err != nil {
 		return err
 	}
 
-	js, err := json.Marshal(e.tracks)
+	js, err := json.MarshalIndent(e.tracks, "", "  ")
 	if err != nil {
 		return err
 	}
@@ -126,6 +127,9 @@ func (e *Exporter) Export(sdCardFolder, outputFolder, format, name string) error
 }
 
 func (e *Exporter) exportFile(ls []*model.LogLine, count int, outTempl, name string, filelist []string) error {
+	if len(ls) == 0 {
+		return nil
+	}
 	sort.Slice(ls, func(i, j int) bool {
 		return ls[i].CorrectTimeStamp.Before(ls[j].CorrectTimeStamp)
 	})
