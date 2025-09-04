@@ -33,7 +33,7 @@ func init() {
 	rootCmd.AddCommand(exportCmd)
 
 	exportCmd.Flags().StringP("output", "o", "./", "output folder. Default is the working dir. Naming track_####.nmea")
-	exportCmd.Flags().StringP("format", "f", export.NMEAFormat, "the format of the output file. Defaults to NMEA, also available: GPX, KML, KMZ")
+	exportCmd.Flags().StringP("format", "f", export.NMEAFormat, "the format of the output file. Defaults to NMEA, also available: GPX, KML, KMZ, GEOJSON")
 	exportCmd.Flags().StringP("name", "n", "", "give the track a name")
 }
 

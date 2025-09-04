@@ -12,6 +12,7 @@ import (
 	"github.com/adrianmo/go-nmea"
 	"github.com/samber/do/v2"
 	"github.com/willie68/osmltools/internal/check"
+	"github.com/willie68/osmltools/internal/export/geojsonexporter"
 	"github.com/willie68/osmltools/internal/export/gpxexporter"
 	"github.com/willie68/osmltools/internal/export/kmlexporter"
 	"github.com/willie68/osmltools/internal/export/nmeaexporter"
@@ -22,17 +23,18 @@ import (
 )
 
 const (
-	NMEAFormat = "NMEA"
-	GPXFormat  = "GPX"
-	KMLFormat  = "KML"
-	KMZFormat  = "KMZ"
+	NMEAFormat    = "NMEA"
+	GPXFormat     = "GPX"
+	KMLFormat     = "KML"
+	KMZFormat     = "KMZ"
+	GEOJSONFormat = "GEOJSON"
 )
 
 var (
 	// ErrUnknownExporter error for unknown exporter
 	ErrUnknownExporter = fmt.Errorf("unknown exporter")
 	// SupportedFormats all supported export formats
-	SupportedFormats = []string{NMEAFormat, GPXFormat, KMLFormat, KMZFormat}
+	SupportedFormats = []string{NMEAFormat, GPXFormat, KMLFormat, KMZFormat, GEOJSONFormat}
 )
 
 type Exporter struct {
@@ -160,6 +162,8 @@ func (e *Exporter) checkExporter(format string) (interfaces.FormatExporter, erro
 		return kmlexporter.New(), nil
 	case KMZFormat:
 		return kmlexporter.New().WithCompressed(true), nil
+	case GEOJSONFormat:
+		return geojsonexporter.New(), nil
 	}
 	return nil, ErrUnknownExporter
 }
