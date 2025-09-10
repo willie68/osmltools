@@ -1,12 +1,15 @@
 package logger
 
 import (
+	"bufio"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 )
 
 type LoggerConfig struct {
@@ -93,36 +96,44 @@ func (c *LoggerConfig) Write(w io.Writer) error {
 
 func Read(r io.Reader) (*LoggerConfig, error) {
 	var cfg LoggerConfig
-	var baud int16
-	_, err := fmt.Fscanf(r, "s%d\r\n", &baud)
-	if err != nil {
-		_, err = fmt.Fscanf(r, "%d\r\n", &baud)
-		if err != nil {
-			return nil, errors.New("cannot read baud rate for channel A")
+	// Scanner erstellen
+	scanner := bufio.NewScanner(r)
+	count := 0
+	// Zeilenweise lesen
+	for scanner.Scan() {
+		line := scanner.Text()
+		switch count {
+		case 0:
+			if strings.HasPrefix(line, "s") {
+				cfg.Seatalk = true
+				line = strings.TrimPrefix(line, "s")
+			}
+			cfg.BaudA = ConvertCodeToBaud(line)
+		case 1:
+			cfg.BaudB = ConvertCodeToBaud(line)
+		case 2:
+			outputs, err := strconv.Atoi(line)
+			if err != nil {
+				return nil, err
+			}
+			cfg.Gyro = (outputs & 2) != 0
+			cfg.Supply = (outputs & 1) != 0
+		case 3:
+			vid, err := strconv.ParseUint(line, 16, 16)
+			if err != nil {
+				return nil, err
+			}
+			cfg.VesselID = int16(vid)
+			break
 		}
-		cfg.Seatalk = false
-	} else {
-		cfg.Seatalk = true
+		count++
 	}
-	cfg.BaudA = ConvertCodeToBaud(fmt.Sprintf("%d", baud))
 
-	_, err = fmt.Fscanf(r, "%d\r\n", &baud)
-	if err != nil {
-		return nil, errors.New("cannot read baud rate for channel B")
+	// Fehler beim Scannen prüfen
+	if err := scanner.Err(); err != nil {
+		return nil, err
 	}
-	cfg.BaudB = ConvertCodeToBaud(fmt.Sprintf("%d", baud))
 
-	var outputs int
-	_, err = fmt.Fscanf(r, "%d\r\n", &outputs)
-	if err != nil {
-		return nil, errors.New("cannot read outputs")
-	}
-	cfg.Gyro = (outputs & 2) != 0
-	cfg.Supply = (outputs & 1) != 0
-	_, err = fmt.Fscanf(r, "%x\r\n", &cfg.VesselID)
-	if err != nil {
-		cfg.VesselID = 0
-	}
 	return &cfg, nil
 }
 

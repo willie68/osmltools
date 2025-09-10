@@ -16,10 +16,19 @@ var (
 		Use:   "version",
 		Short: "the osml version",
 		Long:  `the open sea map logger tools version`,
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(_ *cobra.Command, _ []string) error {
 			ver := do.MustInvoke[config.Version](nil)
-			fmt.Printf("osml: %s \r\n", os.Args[0])
-			fmt.Printf("Version: %s, %s, builded %s \r\n", ver.Version(), ver.Commit(), ver.Date())
+			if JSONOutput {
+				v, err := ver.JSON()
+				if err != nil {
+					return err
+				}
+				fmt.Println(v)
+			} else {
+				fmt.Printf("osml: %s \r\n", os.Args[0])
+				fmt.Printf("Version: %s, %s, builded %s \r\n", ver.Version(), ver.Commit(), ver.Date())
+			}
+			return nil
 		},
 	}
 )
