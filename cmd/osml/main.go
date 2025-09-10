@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/willie68/osmltools/cmd/osml/cmd"
@@ -10,7 +11,11 @@ import (
 func main() {
 	err := cmd.Execute()
 	if err != nil {
-		logging.Root.Errorf("error on command: %v", err)
+		if cmd.JSONOutput {
+			fmt.Printf("{\"error\": \"%v\"}", err)
+		} else {
+			logging.Root.Errorf("error on command: %v", err)
+		}
 		os.Exit(1)
 	}
 }

@@ -19,11 +19,17 @@ var (
 			if verbose {
 				logging.Root.SetLevel(logging.Debug)
 			}
+			if JSONOutput {
+				cmd.Root().SilenceUsage = true
+				cmd.Root().SilenceErrors = true
+				logging.Root.SetLevel(logging.None)
+			}
 			internal.Init()
 		},
 	}
 	sdCardFolder string
 	verbose      bool
+	JSONOutput   bool
 )
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -43,7 +49,7 @@ func init() {
 
 	rootCmd.PersistentFlags().StringVarP(&sdCardFolder, "sdcard", "s", "./", "root folder of the logger sd card")
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "verbose output")
-
+	rootCmd.PersistentFlags().BoolVarP(&JSONOutput, "json", "", false, "output as json where applicable")
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	// rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")

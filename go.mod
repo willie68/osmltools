@@ -5,10 +5,10 @@ go 1.24.4
 require (
 	github.com/adrianmo/go-nmea v1.10.0
 	github.com/aphistic/golf v0.0.0-20180712155816-02c07f170c5a
-	github.com/paulmach/orb v0.11.1
 	github.com/samber/do/v2 v2.0.0-rc1
 	github.com/spf13/cobra v1.9.1
-	github.com/stretchr/testify v1.11.0
+	github.com/stretchr/testify v1.11.1
+	github.com/twpayne/go-geom v1.6.1
 	github.com/twpayne/go-gpx v1.5.0
 	github.com/twpayne/go-kml/v3 v3.3.0
 	github.com/willie68/gowillie68 v0.0.1
@@ -17,7 +17,6 @@ require (
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/mattn/go-colorable v0.1.1 // indirect
@@ -27,8 +26,6 @@ require (
 	github.com/samber/go-type-to-string v1.8.0 // indirect
 	github.com/sergi/go-diff v1.0.0 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
-	github.com/twpayne/go-geom v1.6.1 // indirect
-	go.mongodb.org/mongo-driver v1.11.4 // indirect
 	golang.org/x/net v0.43.0 // indirect
 	golang.org/x/text v0.28.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

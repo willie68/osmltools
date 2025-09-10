@@ -22,15 +22,22 @@ type Config struct {
 
 // constants for logging levels
 const (
-	Debug string = "DEBUG"
-	Info  string = "INFO"
-	Alert string = "ALERT"
-	Error string = "ERROR"
-	Fatal string = "FATAL"
+	None     string = "NONE"
+	LvlNone  int    = 99
+	Debug    string = "DEBUG"
+	LvlDebug int    = 1
+	Info     string = "INFO"
+	LvlInfo  int    = 2
+	Alert    string = "ALERT"
+	LvlAlert int    = 3
+	Error    string = "ERROR"
+	LvlError int    = 4
+	Fatal    string = "FATAL"
+	LvlFatal int    = 5
 )
 
 // Levels defining a list of levels
-var Levels = []string{Debug, Info, Alert, Error, Fatal}
+var Levels = []string{None, Debug, Info, Alert, Error, Fatal}
 
 // Logger main type for logging
 type Logger struct {
@@ -132,16 +139,20 @@ func (s *Logger) WithLevel(level string) *Logger {
 // SetLevel setting the level of this logger
 func (s *Logger) SetLevel(level string) {
 	switch strings.ToUpper(level) {
+	case None:
+		s.LevelInt = LvlNone
 	case Debug:
-		s.LevelInt = 0
+		s.LevelInt = LvlDebug
 	case Info:
-		s.LevelInt = 1
+		s.LevelInt = LvlInfo
 	case Alert:
-		s.LevelInt = 2
+		s.LevelInt = LvlAlert
 	case Error:
-		s.LevelInt = 3
+		s.LevelInt = LvlError
 	case Fatal:
-		s.LevelInt = 4
+		s.LevelInt = LvlFatal
+	default:
+		s.LevelInt = LvlInfo
 	}
 }
 
@@ -158,7 +169,7 @@ func (s *Logger) WithName(name string) *Logger {
 
 // Debug log this message at debug level
 func (s *Logger) Debug(m string) {
-	if s.LevelInt <= 0 {
+	if s.LevelInt <= LvlDebug {
 		if s.gelfActive {
 			_ = s.l.Dbg(m)
 		}
@@ -168,7 +179,7 @@ func (s *Logger) Debug(m string) {
 
 // Debugf log this message at debug level with formatting
 func (s *Logger) Debugf(format string, va ...any) {
-	if s.LevelInt <= 0 {
+	if s.LevelInt <= LvlDebug {
 		msg := s.format(format, va...)
 		if s.gelfActive {
 			_ = s.l.Dbg(msg)
@@ -179,7 +190,7 @@ func (s *Logger) Debugf(format string, va ...any) {
 
 // Info log this message at info level
 func (s *Logger) Info(m string) {
-	if s.LevelInt <= 1 {
+	if s.LevelInt <= LvlInfo {
 		if s.gelfActive {
 			_ = s.l.Info(m)
 		}
@@ -189,7 +200,7 @@ func (s *Logger) Info(m string) {
 
 // Infof log this message at info level with formatting
 func (s *Logger) Infof(format string, va ...any) {
-	if s.LevelInt <= 1 {
+	if s.LevelInt <= LvlInfo {
 		msg := s.format(format, va...)
 		if s.gelfActive {
 			_ = s.l.Info(msg)
@@ -200,7 +211,7 @@ func (s *Logger) Infof(format string, va ...any) {
 
 // Alert log this message at alert level
 func (s *Logger) Alert(m string) {
-	if s.LevelInt <= 2 {
+	if s.LevelInt <= LvlAlert {
 		if s.gelfActive {
 			_ = s.l.Alert(m)
 		}
@@ -210,7 +221,7 @@ func (s *Logger) Alert(m string) {
 
 // Alertf log this message at alert level with formatting.
 func (s *Logger) Alertf(format string, va ...any) {
-	if s.LevelInt <= 2 {
+	if s.LevelInt <= LvlAlert {
 		msg := s.format(format, va...)
 		if s.gelfActive {
 			_ = s.l.Alert(msg)
@@ -221,7 +232,7 @@ func (s *Logger) Alertf(format string, va ...any) {
 
 // Fatal logs a message at level Fatal on the standard logger.
 func (s *Logger) Fatal(m string) {
-	if s.LevelInt <= 4 {
+	if s.LevelInt <= LvlFatal {
 		if s.gelfActive {
 			_ = s.l.Crit(m)
 		}
@@ -231,7 +242,7 @@ func (s *Logger) Fatal(m string) {
 
 // Fatalf logs a message at level Fatal on the standard logger with formatting.
 func (s *Logger) Fatalf(format string, va ...any) {
-	if s.LevelInt <= 4 {
+	if s.LevelInt <= LvlFatal {
 		msg := s.format(format, va...)
 		if s.gelfActive {
 			_ = s.l.Crit(msg)
@@ -242,7 +253,7 @@ func (s *Logger) Fatalf(format string, va ...any) {
 
 // Error logs a message at level Error on the standard logger.
 func (s *Logger) Error(m string) {
-	if s.LevelInt <= 3 {
+	if s.LevelInt <= LvlError {
 		if s.gelfActive {
 			_ = s.l.Err(m)
 		}
@@ -252,7 +263,7 @@ func (s *Logger) Error(m string) {
 
 // Errorf logs a message at level Error on the standard logger with formatting.
 func (s *Logger) Errorf(format string, va ...any) {
-	if s.LevelInt <= 3 {
+	if s.LevelInt <= LvlError {
 		msg := s.format(format, va...)
 		if s.gelfActive {
 			_ = s.l.Err(msg)
@@ -263,27 +274,27 @@ func (s *Logger) Errorf(format string, va ...any) {
 
 // IsDebug this logger is set to debug level
 func (s *Logger) IsDebug() bool {
-	return s.LevelInt <= 0
+	return s.LevelInt <= LvlDebug
 }
 
 // IsInfo this logger is set to debug or info level
 func (s *Logger) IsInfo() bool {
-	return s.LevelInt <= 1
+	return s.LevelInt <= LvlInfo
 }
 
 // IsAlert this logger is set to debug or info level
 func (s *Logger) IsAlert() bool {
-	return s.LevelInt <= 2
+	return s.LevelInt <= LvlAlert
 }
 
 // IsError this logger is set to debug or info level
 func (s *Logger) IsError() bool {
-	return s.LevelInt <= 3
+	return s.LevelInt <= LvlError
 }
 
 // IsFatal this logger is set to debug or info level
 func (s *Logger) IsFatal() bool {
-	return s.LevelInt <= 4
+	return s.LevelInt <= LvlFatal
 }
 
 // format the central format method
