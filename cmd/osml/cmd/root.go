@@ -12,9 +12,7 @@ var (
 		Use:   "osml",
 		Short: "open sea map logger tools",
 		Long:  `open sea map logger tools`,
-		// Uncomment the following line if your bare application
-		// has an action associated with it:
-		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		PersistentPreRun: func(cmd *cobra.Command, _ []string) {
 			logging.Root.SetLevel(logging.Info)
 			if verbose {
 				logging.Root.SetLevel(logging.Debug)

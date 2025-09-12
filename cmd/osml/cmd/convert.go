@@ -16,14 +16,14 @@ var convertCmd = &cobra.Command{
 	Use:    "convert",
 	Short:  "convert the data file(s) to an defined format for the UI",
 	Hidden: true,
-	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+	PersistentPreRun: func(cmd *cobra.Command, _ []string) {
 		cmd.Root().SilenceUsage = true
 		cmd.Root().SilenceErrors = true
 		JSONOutput = true
 		logging.Root.SetLevel(logging.None)
 		internal.Init()
 	},
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(_ *cobra.Command, _ []string) error {
 		return Convert(sdCardFolder)
 	},
 }

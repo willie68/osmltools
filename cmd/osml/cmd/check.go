@@ -15,7 +15,7 @@ var checkCmd = &cobra.Command{
 	Use:   "check",
 	Short: "check the data files of the osmlogger",
 	Long:  `check the data files of the open sea map logger  and write cleanup to an output folder`,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, _ []string) error {
 		outputFolder, _ := cmd.Flags().GetString("output")
 		overwrite, _ := cmd.Flags().GetBool("overwrite")
 		report, _ := cmd.Flags().GetBool("report")

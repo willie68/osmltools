@@ -17,7 +17,7 @@ var exportCmd = &cobra.Command{
 	Use:   "export",
 	Short: "exports the data files into files",
 	Long:  `checks the data files of the open sea map logger, building tracks by day and write a cleanup version to output files with the specifig format`,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, _ []string) error {
 		outputFolder, _ := cmd.Flags().GetString("output")
 		format, _ := cmd.Flags().GetString("format")
 		name, _ := cmd.Flags().GetString("name")

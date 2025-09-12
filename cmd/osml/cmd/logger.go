@@ -17,7 +17,7 @@ var loggerReadCmd = &cobra.Command{
 	Use:   "read",
 	Short: "read the osmlogger configuration",
 	Long:  `read the open sea map logger configuration`,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(_ *cobra.Command, _ []string) error {
 		cfg, err := logger.ReadFromSDCard(sdCardFolder)
 		if err != nil {
 			return err
@@ -29,10 +29,9 @@ var loggerReadCmd = &cobra.Command{
 			}
 			fmt.Println(js)
 			return nil
-		} else {
-			fmt.Printf("configuration read from %s/config.dat\n", sdCardFolder)
-			fmt.Printf("config: %s\n", cfg.String())
 		}
+		fmt.Printf("configuration read from %s/config.dat\n", sdCardFolder)
+		fmt.Printf("config: %s\n", cfg.String())
 		return nil
 	},
 }
@@ -41,7 +40,7 @@ var loggerWriteCmd = &cobra.Command{
 	Use:   "write",
 	Short: "write the osmlogger configuration",
 	Long:  `write the open sea map logger configuration`,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, _ []string) error {
 		seatalk, _ := cmd.Flags().GetBool("seatalk")
 		baudA, _ := cmd.Flags().GetInt16("baudA")
 		baudB, _ := cmd.Flags().GetInt16("baudB")
@@ -70,10 +69,9 @@ var loggerWriteCmd = &cobra.Command{
 			}
 			fmt.Println(js)
 			return nil
-		} else {
-			fmt.Printf("configuration written to %s/config.dat\n", sdCardFolder)
-			fmt.Printf("config: %s\n", cfg.String())
 		}
+		fmt.Printf("configuration written to %s/config.dat\n", sdCardFolder)
+		fmt.Printf("config: %s\n", cfg.String())
 		return nil
 	},
 }
