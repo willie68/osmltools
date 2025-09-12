@@ -1,12 +1,13 @@
 package cmd
 
 import (
-	"time"
+	"encoding/json"
+	"fmt"
 
 	"github.com/samber/do/v2"
 	"github.com/spf13/cobra"
 	"github.com/willie68/osmltools/internal/export"
-	"github.com/willie68/osmltools/internal/logging"
+	"github.com/willie68/osmltools/internal/model"
 )
 
 var convertCmd = &cobra.Command{
@@ -25,8 +26,15 @@ func init() {
 // Convert get the exporter and execute it on the sd file set
 func Convert(sdCardFolder string) error {
 	exp := do.MustInvoke[export.Exporter](nil)
-	td := time.Now()
-	err := exp.Convert(sdCardFolder)
-	logging.Root.Infof("converting file took %d seconds", time.Since(td).Abs().Milliseconds()/1000)
-	return err
+	res, err := exp.Convert(sdCardFolder)
+	if err != nil {
+		return err
+	}
+	res.LogLines = make([]*model.LogLine, 0)
+	js, err := json.Marshal(res)
+	if err != nil {
+		return err
+	}
+	fmt.Print(string(js))
+	return nil
 }
