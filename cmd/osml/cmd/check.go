@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/samber/do/v2"
@@ -25,7 +26,7 @@ var checkCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(checkCmd)
 
-	checkCmd.Flags().StringP("output", "o", "./", "output folder. Default is actual working folder")
+	checkCmd.Flags().StringP("output", "o", "", "output folder. Default is actual working folder")
 	checkCmd.Flags().BoolP("overwrite", "w", false, "overwrite already converted files. Default false")
 	checkCmd.Flags().BoolP("report", "r", false, "create an report file")
 }
@@ -34,7 +35,13 @@ func init() {
 func Check(sdCardFolder, outputFolder string, overwrite, report bool) error {
 	chk := do.MustInvoke[check.Checker](nil)
 	td := time.Now()
-	err := chk.Check(sdCardFolder, outputFolder, overwrite, report)
+	res, err := chk.Check(sdCardFolder, outputFolder, overwrite, report)
 	logging.Root.Infof("checking files took %d seconds", time.Since(td).Abs().Milliseconds()/1000)
+	if err == nil {
+		if JSONOutput {
+			fmt.Println(res.JSON())
+			return nil
+		}
+	}
 	return err
 }

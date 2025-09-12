@@ -2,7 +2,7 @@ package nmeaexporter
 
 import (
 	"fmt"
-	"os"
+	"io"
 
 	"github.com/willie68/osmltools/internal/interfaces"
 	"github.com/willie68/osmltools/internal/logging"
@@ -21,17 +21,9 @@ func New() *NMEAExporter {
 	}
 }
 
-func (e *NMEAExporter) ExportTrack(track model.Track, outputfile string) error {
-	e.log.Infof("exporting %d loglines to nmea file %s", len(track.LogLines), outputfile)
-
-	fs, err := os.Create(outputfile)
-	if err != nil {
-		return err
-	}
-	defer fs.Close()
+func (e *NMEAExporter) ExportTrack(track model.Track, output io.Writer) error {
 	for _, ll := range track.LogLines {
-		fmt.Fprintln(fs, ll.NMEAString())
+		fmt.Fprintln(output, ll.NMEAString())
 	}
-	e.log.Info("output file written")
 	return nil
 }

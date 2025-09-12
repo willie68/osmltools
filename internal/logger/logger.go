@@ -124,9 +124,11 @@ func Read(r io.Reader) (*LoggerConfig, error) {
 				return nil, err
 			}
 			cfg.VesselID = int16(vid)
-			break
 		}
 		count++
+		if count > 3 {
+			break
+		}
 	}
 
 	// Fehler beim Scannen prüfen

@@ -42,6 +42,6 @@ func Export(sdCardFolder, outputFolder, format, name string) error {
 	exp := do.MustInvoke[export.Exporter](nil)
 	td := time.Now()
 	err := exp.Export(sdCardFolder, outputFolder, format, name)
-	logging.Root.Infof("checking files took %d seconds", time.Since(td).Abs().Milliseconds()/1000)
+	logging.Root.Infof("exporting files took %d seconds", time.Since(td).Abs().Milliseconds()/1000)
 	return err
 }

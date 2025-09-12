@@ -36,7 +36,7 @@ func (s *CheckSuite) TestCheckBasicCheck() {
 	os.RemoveAll(of)
 	os.MkdirAll(of, os.ModePerm)
 
-	err := s.chk.Check(
+	_, err := s.chk.Check(
 		filepath.Join(testdata, "sdcard"),
 		of,
 		true,
@@ -54,12 +54,12 @@ func (s *CheckSuite) TestCheckBasicCheck() {
 }
 
 func (s *CheckSuite) TestCheckWrongSDCardFolder() {
-	err := s.chk.Check("./testdata/sdcard1", "./testdata/temp/track.nmea", false, false)
+	_, err := s.chk.Check("./testdata/sdcard1", "./testdata/temp/track.nmea", false, false)
 	s.ast.ErrorIs(osml.ErrWrongCardFolder, err)
 }
 
 func (s *CheckSuite) TestCheckNMEAFileAlreadyExists() {
-	err := s.chk.Check(
+	_, err := s.chk.Check(
 		filepath.Join(testdata, "sdcard"),
 		filepath.Join(testdata, "already"),
 		false,

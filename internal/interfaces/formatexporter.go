@@ -1,7 +1,11 @@
 package interfaces
 
-import "github.com/willie68/osmltools/internal/model"
+import (
+	"io"
+
+	"github.com/willie68/osmltools/internal/model"
+)
 
 type FormatExporter interface {
-	ExportTrack(track model.Track, outputfile string) error
+	ExportTrack(track model.Track, output io.Writer) error
 }

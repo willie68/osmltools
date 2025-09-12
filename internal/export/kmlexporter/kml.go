@@ -2,7 +2,7 @@ package kmlexporter
 
 import (
 	"fmt"
-	"os"
+	"io"
 
 	"github.com/twpayne/go-kml/v3"
 	"github.com/willie68/osmltools/internal/interfaces"
@@ -32,9 +32,7 @@ func (e *KMLExporter) WithCompressed(compressed bool) *KMLExporter {
 }
 
 // ExportTrack exports the given track to a kml or kmz file
-func (e *KMLExporter) ExportTrack(track model.Track, outputfile string) error {
-	e.log.Infof("exporting %d loglines to kml file %s", len(track.LogLines), outputfile)
-
+func (e *KMLExporter) ExportTrack(track model.Track, output io.Writer) error {
 	kos := make([]kml.Coordinate, 0)
 	for _, wpt := range track.Waypoints {
 		kos = append(kos, kml.Coordinate{
@@ -66,22 +64,14 @@ func (e *KMLExporter) ExportTrack(track model.Track, outputfile string) error {
 		),
 	))
 
-	fs, err := os.Create(outputfile)
-	if err != nil {
-		return err
-	}
-	defer fs.Close()
-
 	if e.compressed {
-		if err := kml.WriteKMZ(fs, map[string]any{"doc.kml": kd}); err != nil {
+		if err := kml.WriteKMZ(output, map[string]any{"doc.kml": kd}); err != nil {
 			return err
 		}
 	} else {
-		if err := kml.KML(kd).WriteIndent(fs, "", "  "); err != nil {
+		if err := kml.KML(kd).WriteIndent(output, "", "  "); err != nil {
 			return err
 		}
 	}
-
-	e.log.Info("output file written")
 	return nil
 }

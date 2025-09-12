@@ -3,7 +3,7 @@ package gpxexporter
 import (
 	"encoding/xml"
 	"fmt"
-	"os"
+	"io"
 
 	"github.com/twpayne/go-gpx"
 	"github.com/willie68/osmltools/internal/interfaces"
@@ -23,9 +23,7 @@ func New() *GPXExporter {
 	}
 }
 
-func (e *GPXExporter) ExportTrack(track model.Track, outputfile string) error {
-	e.log.Infof("exporting %d loglines to gpx file %s", len(track.LogLines), outputfile)
-
+func (e *GPXExporter) ExportTrack(track model.Track, output io.Writer) error {
 	g := NewGPX()
 
 	g.Trk = []*gpx.TrkType{{
@@ -41,21 +39,13 @@ func (e *GPXExporter) ExportTrack(track model.Track, outputfile string) error {
 	g.XMLAttrs = make(map[string]string)
 	g.XMLAttrs["xmlns:gpxx"] = "http://www.garmin.com/xmlschemas/GpxExtensionsv3.xsd"
 
-	fs, err := os.Create(outputfile)
-	if err != nil {
-		return err
-	}
-	defer fs.Close()
-
-	if _, err := fmt.Fprint(fs, xml.Header); err != nil {
+	if _, err := fmt.Fprint(output, xml.Header); err != nil {
 		return err
 	}
 
-	if err := g.WriteIndent(fs, "", "  "); err != nil {
+	if err := g.WriteIndent(output, "", "  "); err != nil {
 		return err
 	}
-
-	e.log.Info("output file written")
 	return nil
 }
 

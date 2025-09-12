@@ -14,6 +14,7 @@ import (
 	"github.com/willie68/osmltools/internal/check"
 	"github.com/willie68/osmltools/internal/export/geojsonexporter"
 	"github.com/willie68/osmltools/internal/export/gpxexporter"
+	"github.com/willie68/osmltools/internal/export/jsonexporter"
 	"github.com/willie68/osmltools/internal/export/kmlexporter"
 	"github.com/willie68/osmltools/internal/export/nmeaexporter"
 	"github.com/willie68/osmltools/internal/interfaces"
@@ -23,6 +24,7 @@ import (
 )
 
 const (
+	JSONFormat    = "JSON"
 	NMEAFormat    = "NMEA"
 	GPXFormat     = "GPX"
 	KMLFormat     = "KML"
@@ -34,7 +36,7 @@ var (
 	// ErrUnknownExporter error for unknown exporter
 	ErrUnknownExporter = fmt.Errorf("unknown exporter")
 	// SupportedFormats all supported export formats
-	SupportedFormats = []string{NMEAFormat, GPXFormat, KMLFormat, KMZFormat, GEOJSONFormat}
+	SupportedFormats = []string{JSONFormat, NMEAFormat, GPXFormat, KMLFormat, KMZFormat, GEOJSONFormat}
 )
 
 type Exporter struct {
@@ -69,10 +71,21 @@ func (e *Exporter) Export(sdCardFolder, outputFolder, format, name string) error
 	}
 	e.exp = exp
 
-	files, err := osml.GetDataFiles(sdCardFolder)
+	fs, err := os.Stat(sdCardFolder)
 	if err != nil {
 		return err
 	}
+	var files []string
+	if fs.IsDir() {
+		files, err = osml.GetDataFiles(sdCardFolder)
+		if err != nil {
+			return err
+		}
+	} else {
+		// only a single file should be checked
+		files = append(files, sdCardFolder)
+	}
+
 	e.log.Infof("Found %d files on sd card", len(files))
 
 	err = os.MkdirAll(outputFolder, os.ModePerm)
@@ -151,13 +164,20 @@ func (e *Exporter) exportFile(ls []*model.LogLine, count int, outTempl, name str
 		Name:  name,
 		Files: filelist,
 	}
+	fs, err := os.Create(of)
+	if err != nil {
+		return err
+	}
+	defer fs.Close()
 
 	e.log.Infof("exporting %d loglines to %s", len(ls), of)
-	return e.exp.ExportTrack(*tr, of)
+	return e.exp.ExportTrack(*tr, fs)
 }
 
 func (e *Exporter) checkExporter(format string) (interfaces.FormatExporter, error) {
 	switch format {
+	case JSONFormat:
+		return jsonexporter.New(), nil
 	case NMEAFormat:
 		return nmeaexporter.New(), nil
 	case GPXFormat:

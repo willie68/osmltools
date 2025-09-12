@@ -24,7 +24,7 @@ func TestCeckResultBasic(t *testing.T) {
 
 	ast.Equal("testfilename", res.Files["test"].Filename)
 
-	js := res.String()
+	js := res.JSON()
 
 	ast.Equal(js_basic, js)
 

@@ -24,6 +24,7 @@ const (
 
 var (
 	ErrOutputfileAlreadyExists = errors.New("the output file already exists")
+	ErrNotFound                = errors.New("the requested object was not found")
 )
 
 type Checker struct {
@@ -41,36 +42,47 @@ func Init(inj do.Injector) {
 }
 
 // Check checks the sd card folder and writes the cleaned up NMEA files to the output folder
-func (c *Checker) Check(sdCardFolder, outputFolder string, overwrite, report bool) error {
+func (c *Checker) Check(sdCardFolder, outputFolder string, overwrite, report bool) (*model.CheckResult, error) {
 	c.log.Infof("check called: sd %s, out: %s", sdCardFolder, outputFolder)
+	fs, err := os.Stat(sdCardFolder)
+	if err != nil {
+		return nil, err
+	}
 	result := model.NewCheckResult()
-	files, err := osml.GetDataFiles(sdCardFolder)
-	if err != nil {
-		return err
-	}
 	c.files = make([]string, 0)
-	c.files = append(c.files, files...)
-	c.log.Infof("Found %d files on sd card", len(files))
-
-	err = os.MkdirAll(outputFolder, os.ModePerm)
-	if err != nil {
-		return err
+	if fs.IsDir() {
+		files, err := osml.GetDataFiles(sdCardFolder)
+		if err != nil {
+			return nil, err
+		}
+		c.files = append(c.files, files...)
+	} else {
+		// only a single file should be checked
+		c.files = append(c.files, sdCardFolder)
 	}
+	c.log.Infof("Found %d files on sd card", len(c.files))
 
-	for _, lf := range files {
-		err1 := c.checkFile(lf, result, outputFolder, overwrite)
-		if err1 != nil {
-			return err1
+	if outputFolder != "" {
+		err = os.MkdirAll(outputFolder, os.ModePerm)
+		if err != nil {
+			return nil, err
 		}
 	}
-	if report {
+
+	for _, lf := range c.files {
+		err1 := c.checkFile(lf, result, outputFolder, overwrite)
+		if err1 != nil {
+			return nil, err1
+		}
+	}
+	if report && outputFolder != "" {
 		err = c.WriteResult(outputFolder, *result)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 	c.log.Infof("all files parsed with %d errors and %d unknown tags", c.ErrorTags, c.UnknownTags)
-	return nil
+	return result, nil
 }
 
 // checkFile checks a single logger file and writes the cleaned up NMEA file to the output folder
@@ -89,6 +101,14 @@ func (c *Checker) checkFile(loggerfile string, result *model.CheckResult, output
 	if err != nil {
 		return err
 	}
+	ver, err := c.GetVersion(ls)
+	if err == nil {
+		fr.Version = ver
+	} else {
+		fr.Version = "n.N."
+	}
+	fr.FirstTimestamp = ls[0].CorrectTimeStamp
+	fr.LastTimestamt = ls[len(ls)-1].CorrectTimeStamp
 	if len(ls) == 0 {
 		c.log.Infof("no valid nmea lines found in file %s", loggerfile)
 		fr.AddErrors(fmt.Sprintf("no valid nmea lines found in file %s", loggerfile))
@@ -98,12 +118,28 @@ func (c *Checker) checkFile(loggerfile string, result *model.CheckResult, output
 		c.log.Infof("no valid time stamp found in file %s", loggerfile)
 		fr.AddErrors(fmt.Sprintf("no valid time stamp found in file %s", loggerfile))
 	}
-	if err != nil {
+	if outputFolder != "" {
 		err = c.outputToFolder(fr, loggerfile, outputFolder, ls, overwrite)
-		return err
+		if err == nil {
+			return err
+		}
 	}
 	c.log.Infof("file parsed with %d errors and %d unknown tags", c.ErrorTags-set, c.UnknownTags-sut)
 	return nil
+}
+
+func (c *Checker) GetVersion(ls []*model.LogLine) (string, error) {
+	for _, ll := range ls {
+		if ll.NMEAMessage != nil {
+			if ll.NMEAMessage.Prefix() == "POSMST" {
+				st, ok := ll.NMEAMessage.(osmlnmea.OSMST)
+				if ok {
+					return st.Version, nil
+				}
+			}
+		}
+	}
+	return "", ErrNotFound
 }
 
 // AnalyseLoggerFile analyses a single logger file and returns the log lines found
@@ -139,7 +175,9 @@ func (c *Checker) AnalyseLoggerFile(fr *model.FileResult, lf string) ([]*model.L
 			ls = append(ls, ll)
 		}
 	}
-
+	if fr != nil {
+		fr.DatagramCount = count
+	}
 	// Check for errors during the scan
 	if err := scanner.Err(); err != nil {
 		c.log.Fatalf("error reading file: %v", err)
@@ -280,5 +318,5 @@ func (c *Checker) processCFG(ll model.LogLine, found bool) (vesselID int64, ok b
 // WriteResult writes the check result to a json file in the output folder
 func (c *Checker) WriteResult(of string, res model.CheckResult) error {
 	fn := filepath.Join(of, "report.json")
-	return os.WriteFile(fn, []byte(res.String()), os.ModePerm)
+	return os.WriteFile(fn, []byte(res.JSON()), os.ModePerm)
 }

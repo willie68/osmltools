@@ -1,7 +1,10 @@
 package osmlnmea
 
 import (
+	"encoding/json"
+	"fmt"
 	"testing"
+	"time"
 
 	"github.com/adrianmo/go-nmea"
 	"github.com/stretchr/testify/assert"
@@ -19,6 +22,12 @@ func TestCheckSuite(t *testing.T) {
 
 func (s *OsmlnmeaSuite) SetupTest() {
 	s.ast = assert.New(s.T())
+}
+
+func TestDateTime(t *testing.T) {
+	tt := time.Time{}
+	js, _ := json.Marshal(tt)
+	fmt.Print(string(js))
 }
 
 func (s *OsmlnmeaSuite) TestRegistrationCheck() {

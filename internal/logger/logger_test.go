@@ -137,7 +137,6 @@ func TestReadFail(t *testing.T) {
 	input := "s5\r\n3\r\n3\r\n0000162x\r\n" // invalid vessel id
 	reader := bufio.NewReader(bytes.NewBufferString(input))
 	cfg, err := Read(reader)
-	ast.Nil(err)
-	ast.NotNil(cfg)
-	ast.Equal(int16(0), cfg.VesselID) // should be zero on error
+	ast.NotNil(err)
+	ast.Nil(cfg)
 }

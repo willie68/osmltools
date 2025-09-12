@@ -1,7 +1,7 @@
 package geojsonexporter
 
 import (
-	"os"
+	"io"
 
 	"github.com/twpayne/go-geom"
 	"github.com/twpayne/go-geom/encoding/geojson"
@@ -22,9 +22,7 @@ func New() *GeoJSONExporter {
 	}
 }
 
-func (e *GeoJSONExporter) ExportTrack(track model.Track, outputfile string) error {
-	e.log.Infof("exporting %d loglines to geojson file %s", len(track.LogLines), outputfile)
-
+func (e *GeoJSONExporter) ExportTrack(track model.Track, output io.Writer) error {
 	coords := make([]geom.Coord, 0)
 	depths := make([]float64, 0)
 	speeds := make([]float64, 0)
@@ -76,9 +74,6 @@ func (e *GeoJSONExporter) ExportTrack(track model.Track, outputfile string) erro
 		return err
 	}
 
-	err = os.WriteFile(outputfile, rawJSON, os.ModePerm)
-	if err != nil {
-		return err
-	}
-	return nil
+	_, err = output.Write(rawJSON)
+	return err
 }

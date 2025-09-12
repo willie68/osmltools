@@ -13,14 +13,18 @@ type CheckResult struct {
 }
 
 type FileResult struct {
-	Filename     string    `json:"filename"`
-	Origin       string    `json:"origin"`
-	Created      time.Time `json:"created"`
-	VesselID     int64     `json:"vesselID"`
-	ErrorCount   int       `json:"errorCount"`
-	Errors       []string  `json:"errors"`
-	WarningCount int       `json:"warningCount"`
-	Warnings     []string  `json:"warnings"`
+	Filename       string    `json:"filename"`
+	Origin         string    `json:"origin"`
+	Created        time.Time `json:"created"`
+	VesselID       int64     `json:"vesselID"`
+	DatagramCount  int       `json:"datagramCount"`
+	Version        string    `json:"version"`
+	FirstTimestamp time.Time `json:"firstTimestamp"`
+	LastTimestamt  time.Time `json:"lastTimestamp"`
+	ErrorCount     int       `json:"errorCount"`
+	Errors         []string  `json:"errors"`
+	WarningCount   int       `json:"warningCount"`
+	Warnings       []string  `json:"warnings"`
 }
 
 func NewCheckResult() *CheckResult {
@@ -38,6 +42,10 @@ func NewFileResult() *FileResult {
 }
 
 func (c *CheckResult) String() string {
+	return c.JSON()
+}
+
+func (c *CheckResult) JSON() string {
 	c.ErrorCount = 0
 	c.WarningCount = 0
 	for _, ll := range c.Files {
@@ -109,4 +117,24 @@ func (f *FileResult) WithWarnings(wrns []string) *FileResult {
 func (f *FileResult) Calc() {
 	f.ErrorCount = len(f.Errors)
 	f.WarningCount = len(f.Warnings)
+}
+
+func (f *FileResult) WithVersion(v string) *FileResult {
+	f.Version = v
+	return f
+}
+
+func (f *FileResult) WithDatagramCount(c int) *FileResult {
+	f.DatagramCount = c
+	return f
+}
+
+func (f *FileResult) WithFirstTimestamp(ts time.Time) *FileResult {
+	f.FirstTimestamp = ts
+	return f
+}
+
+func (f *FileResult) WithLastTimestamp(ts time.Time) *FileResult {
+	f.LastTimestamt = ts
+	return f
 }
