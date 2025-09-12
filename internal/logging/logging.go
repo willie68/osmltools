@@ -37,7 +37,9 @@ const (
 )
 
 // Levels defining a list of levels
-var Levels = []string{None, Debug, Info, Alert, Error, Fatal}
+var (
+	Levels = []string{None, Debug, Info, Alert, Error, Fatal}
+)
 
 // Logger main type for logging
 type Logger struct {
