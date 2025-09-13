@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/samber/do/v2"
@@ -30,7 +31,10 @@ func init() {
 func Backup(sdCardFolder, outputFolder string) error {
 	bck := do.MustInvoke[backup.Backup](nil)
 	td := time.Now()
-	err := bck.Backup(sdCardFolder, outputFolder)
+	name, err := bck.Backup(sdCardFolder, outputFolder)
+	if JSONOutput {
+		fmt.Printf(`{ "filename":"%s" }`, name)
+	}
 	logging.Root.Infof("backup files took %d seconds", time.Since(td).Abs().Milliseconds()/1000)
 	return err
 }

@@ -26,17 +26,21 @@ func Init(inj do.Injector) {
 }
 
 // Backup backup all files from the sd card into a zip file
-func (b *Backup) Backup(sdCardFolder, outputFolder string) error {
-	err := os.MkdirAll(outputFolder, os.ModePerm)
+func (b *Backup) Backup(sdCardFolder, outputFolder string) (string, error) {
+	sdCardFolder, err := filepath.Abs(sdCardFolder)
 	if err != nil {
-		return err
+		return "", err
 	}
-
-	of := filepath.Join(outputFolder, fmt.Sprintf("bck_%s.zip", time.Now().Format("20060102150405")))
+	err = os.MkdirAll(outputFolder, os.ModePerm)
+	if err != nil {
+		return "", err
+	}
+	name := fmt.Sprintf("bck_%s.zip", time.Now().Format("20060102150405"))
+	of := filepath.Join(outputFolder, name)
 
 	file, err := os.Create(of)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer file.Close()
 
@@ -44,7 +48,6 @@ func (b *Backup) Backup(sdCardFolder, outputFolder string) error {
 	defer w.Close()
 
 	walker := func(path string, info os.FileInfo, err error) error {
-		fmt.Printf("Crawling: %#v\n", path)
 		if err != nil {
 			return err
 		}
@@ -57,7 +60,10 @@ func (b *Backup) Backup(sdCardFolder, outputFolder string) error {
 		}
 		defer file.Close()
 
-		name := path[len(sdCardFolder)+1:]
+		name, err := filepath.Rel(sdCardFolder, path)
+		if err != nil {
+			return err
+		}
 		// Ensure that `path` is not absolute; it should not start with "/".
 		// This snippet happens to work because I don't use
 		// absolute paths, but ensure your real-world code
@@ -77,7 +83,7 @@ func (b *Backup) Backup(sdCardFolder, outputFolder string) error {
 
 	err = filepath.Walk(sdCardFolder, walker)
 	if err != nil {
-		return err
+		return "", err
 	}
-	return nil
+	return name, nil
 }

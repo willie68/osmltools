@@ -8,6 +8,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const (
+	testZIP = "../../testdata/bck/bck_20250913160522.zip"
+)
+
 func TestBackup(t *testing.T) {
 	ast := assert.New(t)
 
@@ -17,8 +21,9 @@ func TestBackup(t *testing.T) {
 	bck := do.MustInvoke[Backup](inj)
 	ast.NotNil(bck)
 
-	err := bck.Backup("../../testdata/sdCard", "../../testdata/bck/")
+	filename, err := bck.Backup("../../testdata/sdCard", "../../testdata/bck/")
 	ast.NoError(err)
+	ast.NotEmpty(filename)
 }
 
 func TestRestore(t *testing.T) {
@@ -33,6 +38,25 @@ func TestRestore(t *testing.T) {
 	err := os.MkdirAll("../../testdata/rst", os.ModePerm)
 	ast.NoError(err)
 
-	err = bck.Restore("../../testdata/bck/bck_20250912223031.zip", "../../testdata/rst")
+	filename, err := bck.Restore(testZIP, "../../testdata/rst")
 	ast.NoError(err)
+	ast.Equal(testZIP, filename)
+}
+
+func TestRestore1(t *testing.T) {
+	ast := assert.New(t)
+
+	inj := do.New()
+	Init(inj)
+
+	bck := do.MustInvoke[Backup](inj)
+	ast.NotNil(bck)
+
+	err := os.MkdirAll("../../testdata/rst", os.ModePerm)
+	ast.NoError(err)
+	zip := "../../testdata/bck/bck_20250913160205.zip"
+
+	filename, err := bck.Restore(zip, "../../testdata/rst1")
+	ast.NoError(err)
+	ast.Equal(zip, filename)
 }

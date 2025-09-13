@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/samber/do/v2"
@@ -16,7 +18,7 @@ var restoreCmd = &cobra.Command{
 	Long:  `restore all data and config files of the open sea map logger from a zip file`,
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		zipfile, _ := cmd.Flags().GetString("zipfile")
-		return Backup(zipfile, sdCardFolder)
+		return Restore(zipfile, sdCardFolder)
 	},
 }
 
@@ -27,10 +29,19 @@ func init() {
 }
 
 // Restore get the checker and execute it on the sd file set
-func Restore(sdCardFolder, zipfile string) error {
+func Restore(zipfile, sdCardFolder string) error {
 	bck := do.MustInvoke[backup.Backup](nil)
 	td := time.Now()
-	err := bck.Restore(zipfile, sdCardFolder)
+	zip, err := bck.Restore(zipfile, sdCardFolder)
+	if JSONOutput {
+		jp := struct {
+			Filename string `json:"filename"`
+		}{
+			Filename: zip,
+		}
+		js, _ := json.Marshal(jp)
+		fmt.Print(string(js))
+	}
 	logging.Root.Infof("restore files took %d seconds", time.Since(td).Abs().Milliseconds()/1000)
 	return err
 }
