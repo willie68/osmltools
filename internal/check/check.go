@@ -82,6 +82,7 @@ func (c *Checker) Check(sdCardFolder, outputFolder string, overwrite, report boo
 		}
 	}
 	c.log.Infof("all files parsed with %d errors and %d unknown tags", c.ErrorTags, c.UnknownTags)
+	result.Calc()
 	return result, nil
 }
 
@@ -107,16 +108,16 @@ func (c *Checker) checkFile(loggerfile string, result *model.CheckResult, output
 	} else {
 		fr.Version = "n.N."
 	}
-	fr.FirstTimestamp = ls[0].CorrectTimeStamp
-	fr.LastTimestamt = ls[len(ls)-1].CorrectTimeStamp
 	if len(ls) == 0 {
 		c.log.Infof("no valid nmea lines found in file %s", loggerfile)
-		fr.AddErrors(fmt.Sprintf("no valid nmea lines found in file %s", loggerfile))
+		fr.AddErrors("I", fmt.Sprintf("no valid nmea lines found in file %s", loggerfile))
 		return nil
 	}
+	fr.FirstTimestamp = ls[0].CorrectTimeStamp
+	fr.LastTimestamt = ls[len(ls)-1].CorrectTimeStamp
 	if !ok {
 		c.log.Infof("no valid time stamp found in file %s", loggerfile)
-		fr.AddErrors(fmt.Sprintf("no valid time stamp found in file %s", loggerfile))
+		fr.AddErrors("I", fmt.Sprintf("no valid time stamp found in file %s", loggerfile))
 	}
 	if outputFolder != "" {
 		err = c.outputToFolder(fr, loggerfile, outputFolder, ls, overwrite)
@@ -168,7 +169,11 @@ func (c *Checker) AnalyseLoggerFile(fr *model.FileResult, lf string) ([]*model.L
 				c.ErrorTags++
 				ls := fmt.Sprintf("error in line %d: %s: %v", count, line, err)
 				c.log.Debug(ls)
-				model.AddError(fr, ls)
+				ch := "I"
+				if ll != nil {
+					ch = ll.Channel
+				}
+				model.AddError(ch, fr, ls)
 			}
 		}
 		if ok {

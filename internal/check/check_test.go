@@ -67,3 +67,14 @@ func (s *CheckSuite) TestCheckNMEAFileAlreadyExists() {
 	)
 	s.ast.ErrorIs(err, ErrOutputfileAlreadyExists)
 }
+
+func (s *CheckSuite) TestCheckEmptyFile() {
+	res, err := s.chk.Check(
+		filepath.Join(testdata, "empty", "DATA001231.DAT"),
+		filepath.Join(testdata, "tmp"),
+		false,
+		false,
+	)
+	s.ast.NoError(err)
+	s.ast.Equal(1, res.ErrorCount)
+}

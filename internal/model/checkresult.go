@@ -25,6 +25,9 @@ type FileResult struct {
 	Errors         []string  `json:"errors"`
 	WarningCount   int       `json:"warningCount"`
 	Warnings       []string  `json:"warnings"`
+	ErrorA         int       `json:"errorA"`
+	ErrorB         int       `json:"errorB"`
+	ErrorI         int       `json:"errorI"`
 }
 
 func NewCheckResult() *CheckResult {
@@ -41,11 +44,7 @@ func NewFileResult() *FileResult {
 	}
 }
 
-func (c *CheckResult) String() string {
-	return c.JSON()
-}
-
-func (c *CheckResult) JSON() string {
+func (c *CheckResult) Calc() {
 	c.ErrorCount = 0
 	c.WarningCount = 0
 	for _, ll := range c.Files {
@@ -53,6 +52,14 @@ func (c *CheckResult) JSON() string {
 		c.ErrorCount += ll.ErrorCount
 		c.WarningCount += ll.WarningCount
 	}
+}
+
+func (c *CheckResult) String() string {
+	return c.JSON()
+}
+
+func (c *CheckResult) JSON() string {
+	c.Calc()
 	js, err := json.MarshalIndent(c, "", "    ")
 	if err != nil {
 		panic(err)
@@ -71,9 +78,9 @@ func AddWarning(fr *FileResult, msg string) {
 	}
 }
 
-func AddError(fr *FileResult, msg string) {
+func AddError(channel string, fr *FileResult, msg string) {
 	if fr != nil {
-		fr.Errors = append(fr.Errors, msg)
+		fr.AddErrors(channel, msg)
 	}
 }
 
@@ -103,9 +110,17 @@ func (f *FileResult) WithErrors(errs []string) *FileResult {
 	return f
 }
 
-func (f *FileResult) AddErrors(errs ...string) {
+func (f *FileResult) AddErrors(channel string, errs ...string) {
 	f.Errors = append(f.Errors, errs...)
 	f.ErrorCount = len(f.Errors)
+	switch channel {
+	case "A":
+		f.ErrorA += len(errs)
+	case "B":
+		f.ErrorB += len(errs)
+	case "I":
+		f.ErrorI += len(errs)
+	}
 }
 
 func (f *FileResult) WithWarnings(wrns []string) *FileResult {
