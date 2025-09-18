@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../go_mapproxy"
+		},
+		{
+			"path": "../go-micro"
+		}
+	],
+	"settings": {}
+}
