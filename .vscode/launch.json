@@ -101,7 +101,7 @@
             ]
         },
         {
-            "name": "osml logger read",
+            "name": "osml track list",
             "type": "go",
             "request": "launch",
             "mode": "auto",
@@ -109,10 +109,12 @@
             "output" : "${workspaceFolder}/debug.exe",
             "cwd": "${workspaceFolder}",
             "args": [
-                "logger",
-                "read",
+                "track",
+                "list",
                 "-s",
-                "f:",
+                "./testdata/sdcard/",
+                "-t",
+                "./testdata/sdcard/tracks/TRACK0001.zip",
                 "--json"
             ],
         }

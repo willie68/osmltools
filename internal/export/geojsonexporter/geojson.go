@@ -22,7 +22,7 @@ func New() *GeoJSONExporter {
 	}
 }
 
-func (e *GeoJSONExporter) ExportTrack(track model.Track, output io.Writer) error {
+func (e *GeoJSONExporter) ExportTrack(track model.TrackPoints, output io.Writer) error {
 	coords := make([]geom.Coord, 0)
 	depths := make([]float64, 0)
 	speeds := make([]float64, 0)

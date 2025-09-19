@@ -19,9 +19,9 @@ type Version struct {
 	date    string `json:"date"`
 }
 
-func Init(inj *do.Injector) {
+func Init(inj do.Injector) {
 	ver := NewVersion()
-	do.ProvideValue(nil, *ver)
+	do.ProvideValue(inj, *ver)
 }
 
 // NewVersion creating a new version

@@ -23,7 +23,7 @@ func New() *GPXExporter {
 	}
 }
 
-func (e *GPXExporter) ExportTrack(track model.Track, output io.Writer) error {
+func (e *GPXExporter) ExportTrack(track model.TrackPoints, output io.Writer) error {
 	g := NewGPX()
 
 	g.Trk = []*gpx.TrkType{{

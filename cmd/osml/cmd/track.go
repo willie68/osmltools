@@ -1,53 +1,131 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/samber/do/v2"
 	"github.com/spf13/cobra"
 	"github.com/willie68/osmltools/internal"
-	"github.com/willie68/osmltools/internal/export"
-	"github.com/willie68/osmltools/internal/logging"
 	"github.com/willie68/osmltools/internal/model"
+	"github.com/willie68/osmltools/internal/track"
 )
 
-var trackCmd = &cobra.Command{
-	Use:    "track",
-	Short:  "convert the data file(s) to a track and zip it",
-	Hidden: true,
-	PersistentPreRun: func(cmd *cobra.Command, _ []string) {
-		cmd.Root().SilenceUsage = true
-		cmd.Root().SilenceErrors = true
-		JSONOutput = true
-		logging.Root.SetLevel(logging.None)
-		internal.Init()
-	},
-	RunE: func(cmd *cobra.Command, _ []string) error {
-		files, _ := cmd.Flags().GetStringSlice("files")
-		return Convert(sdCardFolder, files)
-	},
-}
+var (
+	trackCmd = &cobra.Command{
+		Use:    "track",
+		Short:  "convert the data file(s) to a track and zip it",
+		Hidden: false,
+	}
+
+	newTrackCmd = &cobra.Command{
+		Use:    "new",
+		Short:  "create a new track and add data to it",
+		Hidden: false,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			files, _ := cmd.Flags().GetStringSlice("files")
+			trackfile, _ := cmd.Flags().GetString("track")
+			name, _ := cmd.Flags().GetString("name")
+			description, _ := cmd.Flags().GetString("description")
+			vesselID, _ := cmd.Flags().GetInt32("vesselid")
+			t := model.Track{
+				Files:       make([]model.SourceData, 0),
+				Name:        name,
+				Description: description,
+				VesselID:    vesselID,
+			}
+			return NewTrack(sdCardFolder, files, trackfile, t)
+		},
+	}
+
+	addDataTrackCmd = &cobra.Command{
+		Use:    "add",
+		Short:  "add data to a track file",
+		Hidden: false,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			files, _ := cmd.Flags().GetStringSlice("files")
+			trackfile, _ := cmd.Flags().GetString("track")
+			return AddTrack(sdCardFolder, files, trackfile)
+		},
+	}
+
+	deleteTrackCmd = &cobra.Command{
+		Use:    "delete",
+		Short:  "delete a track file",
+		Hidden: false,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			track, _ := cmd.Flags().GetString("track")
+			return DeleteTrack(sdCardFolder, track)
+		},
+	}
+
+	listTrackCmd = &cobra.Command{
+		Use:    "list",
+		Short:  "list all information about a track file",
+		Hidden: false,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			track, _ := cmd.Flags().GetString("track")
+			return ListTrack(sdCardFolder, track)
+		},
+	}
+)
 
 func init() {
 	rootCmd.AddCommand(trackCmd)
+	trackCmd.PersistentFlags().StringP("track", "t", "", "the track file to work with")
 
-	trackCmd.Flags().StringSliceP("files", "f", []string{}, "files to process, separated by commas")
-	trackCmd.Flags().StringP("output", "o", "./", "output folder. Default is the working dir.")
+	trackCmd.AddCommand(newTrackCmd)
+	newTrackCmd.Flags().StringSliceP("files", "f", []string{}, "files to process, separated by commas")
+	newTrackCmd.Flags().StringP("name", "n", "track", "name of the track")
+	newTrackCmd.Flags().StringP("description", "d", "", "description of the track")
+	newTrackCmd.Flags().Int32P("vesselid", "i", 0, "vessel id")
+
+	trackCmd.AddCommand(addDataTrackCmd)
+	addDataTrackCmd.Flags().StringSliceP("files", "f", []string{}, "files to process, separated by commas")
+
+	trackCmd.AddCommand(deleteTrackCmd)
+
+	trackCmd.AddCommand(listTrackCmd)
 }
 
-// Convert get the exporter and execute it on the sd file set
-func CreateTrack(sdCardFolder string, files []string) error {
-	exp := do.MustInvoke[export.Exporter](nil)
-	res, err := exp.Convert(sdCardFolder, files)
-	if err != nil {
-		return err
+// NewTrack creates a new track file and adds the given data files to it
+func NewTrack(sdCardFolder string, files []string, trackfile string, tr model.Track) error {
+	tm := do.MustInvokeAs[track.Manager](internal.Inj)
+	return tm.NewTrack(sdCardFolder, files, trackfile, tr)
+}
+
+// AddTrack add  data files to an existing track file
+func AddTrack(sdCardFolder string, files []string, trackfile string) error {
+	tm := do.MustInvokeAs[track.Manager](internal.Inj)
+	return tm.AddTrack(sdCardFolder, files, trackfile)
+}
+
+// ListTrack lists information about the given track file
+func ListTrack(sdCardFolder string, trackfile string) error {
+	tm := do.MustInvokeAs[track.Manager](internal.Inj)
+	tr, err := tm.ListTrack(sdCardFolder, trackfile)
+	if err == nil {
+		if JSONOutput {
+			js, err := tr.JSON()
+			if err != nil {
+				return err
+			}
+			fmt.Println(js)
+			return nil
+		}
+		fmt.Printf("Track: %s\r\n", trackfile)
+		fmt.Printf("Name: %s\r\n", tr.Name)
+		fmt.Printf("Description: %s\r\n", tr.Description)
+		fmt.Printf("VesselID: %d\r\n", tr.VesselID)
+		fmt.Printf("Files: \r\n")
+		for _, f := range tr.Files {
+			fmt.Printf(" - %s (%d) \r\n", f.FileName, f.Size)
+		}
 	}
-	res.LogLines = make([]*model.LogLine, 0)
-	js, err := json.Marshal(res)
-	if err != nil {
-		return err
-	}
-	fmt.Print(string(js))
-	return nil
+	return err
+}
+
+// DeleteTrack deletes the given track file
+func DeleteTrack(sdCardFolder string, trackfile string) error {
+	tm := do.MustInvokeAs[track.Manager](internal.Inj)
+	return tm.DeleteTrack(sdCardFolder, trackfile)
 }

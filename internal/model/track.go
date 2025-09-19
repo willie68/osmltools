@@ -1,31 +1,30 @@
 package model
 
-import "time"
+import (
+	"encoding/json"
+)
 
-type ThreePoints struct {
-	X int64 `json:"x,omitempty"`
-	Y int64 `json:"y,omitempty"`
-	Z int64 `json:"z,omitempty"`
-}
-
-// Waypoint internal waypoint structure
-type Waypoint struct {
-	Name         string       `json:"name,omitempty"`
-	Lat          float64      `json:"latitude,omitempty"`
-	Lon          float64      `json:"longitude,omitempty"`
-	Time         time.Time    `json:"time,omitempty"`
-	Speed        float64      `json:"speed,omitempty"`
-	Ele          float64      `json:"elevation,omitempty"`
-	Depth        float64      `json:"depth,omitempty"`
-	Acceleration *ThreePoints `json:"acc,omitempty"`
-	GyroLocation *ThreePoints `json:"gyro,omitempty"`
-	Supply       int64        `json:"supply,omitempty"`
-}
-
+// Track track structure, containing metadata and the list of source data files and the map file for the ui
 type Track struct {
-	Name      string      `json:"name,omitempty"`
-	Waypoints []*Waypoint `json:"waypoints,omitempty"`
-	Start     *Waypoint   `json:"start,omitempty"`
-	End       *Waypoint   `json:"end,omitempty"`
-	LogLines  []*LogLine  `json:"log_lines,omitempty"`
+	Name        string       `json:"name,omitempty"`
+	Description string       `json:"description,omitempty"`
+	VesselID    int32        `json:"vessel_id,omitempty"`
+	Files       []SourceData `json:"files,omitempty"`
+	MapFile     string       `json:"map_file,omitempty"`
+}
+
+// SourceData information about a source data file
+type SourceData struct {
+	FileName string `json:"file_name,omitempty"`
+	Size     int64  `json:"size,omitempty"`
+	Hash     string `json:"hash,omitempty"`
+}
+
+// JSON return the json representation of the version
+func (t *Track) JSON() (string, error) {
+	js, err := json.Marshal(t)
+	if err != nil {
+		return "", err
+	}
+	return string(js), nil
 }

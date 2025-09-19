@@ -7,5 +7,5 @@ import (
 )
 
 type FormatExporter interface {
-	ExportTrack(track model.Track, output io.Writer) error
+	ExportTrack(track model.TrackPoints, output io.Writer) error
 }

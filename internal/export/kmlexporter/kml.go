@@ -32,7 +32,7 @@ func (e *KMLExporter) WithCompressed(compressed bool) *KMLExporter {
 }
 
 // ExportTrack exports the given track to a kml or kmz file
-func (e *KMLExporter) ExportTrack(track model.Track, output io.Writer) error {
+func (e *KMLExporter) ExportTrack(track model.TrackPoints, output io.Writer) error {
 	kos := make([]kml.Coordinate, 0)
 	for _, wpt := range track.Waypoints {
 		kos = append(kos, kml.Coordinate{

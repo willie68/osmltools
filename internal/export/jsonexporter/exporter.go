@@ -25,7 +25,7 @@ func New() *JSONExporter {
 }
 
 // ExportTrack exports the given track to a kml or kmz file
-func (e *JSONExporter) ExportTrack(track model.Track, output io.Writer) error {
+func (e *JSONExporter) ExportTrack(track model.TrackPoints, output io.Writer) error {
 	js, err := json.Marshal(track.Waypoints)
 	if err != nil {
 		return err

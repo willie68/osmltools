@@ -37,7 +37,7 @@ func init() {
 
 // Convert get the exporter and execute it on the sd file set
 func Convert(sdCardFolder string, files []string) error {
-	exp := do.MustInvoke[export.Exporter](nil)
+	exp := do.MustInvoke[export.Exporter](internal.Inj)
 	res, err := exp.Convert(sdCardFolder, files)
 	if err != nil {
 		return err

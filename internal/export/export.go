@@ -153,7 +153,7 @@ func (e *Exporter) exportFile(ls []*model.LogLine, count int, outTempl, name str
 		name = fmt.Sprintf("Track %04d", count)
 	}
 	of := fmt.Sprintf(outTempl, count)
-	tr := &model.Track{
+	tr := &model.TrackPoints{
 		Name:     name,
 		LogLines: ls,
 	}
@@ -196,7 +196,7 @@ func (e *Exporter) checkExporter(format string) (interfaces.FormatExporter, erro
 }
 
 // GetWaypoints extracts the waypoints from the log lines of the track
-func (e *Exporter) GetWaypoints(track *model.Track) (*model.Track, error) {
+func (e *Exporter) GetWaypoints(track *model.TrackPoints) (*model.TrackPoints, error) {
 	e.log.Infof("extracting waypoints from %d log lines", len(track.LogLines))
 
 	track.Waypoints = make([]*model.Waypoint, 0)

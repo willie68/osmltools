@@ -8,6 +8,7 @@ import (
 
 	"github.com/samber/do/v2"
 	"github.com/spf13/cobra"
+	"github.com/willie68/osmltools/internal"
 	"github.com/willie68/osmltools/internal/export"
 	"github.com/willie68/osmltools/internal/logging"
 )
@@ -33,7 +34,7 @@ var exportCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(exportCmd)
 
-	convertCmd.Flags().StringSliceP("files", "f", []string{}, "files to process, separated by commas")
+	exportCmd.Flags().StringSliceP("files", "f", []string{}, "files to process, separated by commas")
 	exportCmd.Flags().StringP("output", "o", "./", "output folder. Default is the working dir. Naming track_####.nmea")
 	exportCmd.Flags().StringP("format", "m", export.NMEAFormat, "the format of the output file. Defaults to NMEA, also available: GPX, KML, KMZ, GEOJSON")
 	exportCmd.Flags().StringP("name", "n", "", "give the track a name")
@@ -41,9 +42,9 @@ func init() {
 
 // Export get the exporter and execute it on the sd file set
 func Export(sdCardFolder, outputFolder string, files []string, format, name string) error {
-	exp := do.MustInvoke[export.Exporter](nil)
+	exp := do.MustInvoke[export.Exporter](internal.Inj)
 	td := time.Now()
-	err := exp.Export(sdCardFolder, outputFolder, format, name)
+	err := exp.Export(sdCardFolder, outputFolder, files, format, name)
 	logging.Root.Infof("exporting files took %d seconds", time.Since(td).Abs().Milliseconds()/1000)
 	return err
 }

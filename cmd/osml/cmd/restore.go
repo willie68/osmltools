@@ -7,6 +7,7 @@ import (
 
 	"github.com/samber/do/v2"
 	"github.com/spf13/cobra"
+	"github.com/willie68/osmltools/internal"
 	"github.com/willie68/osmltools/internal/backup"
 	"github.com/willie68/osmltools/internal/logging"
 )
@@ -30,7 +31,7 @@ func init() {
 
 // Restore get the checker and execute it on the sd file set
 func Restore(zipfile, sdCardFolder string) error {
-	bck := do.MustInvoke[backup.Backup](nil)
+	bck := do.MustInvoke[backup.Backup](internal.Inj)
 	td := time.Now()
 	zip, err := bck.Restore(zipfile, sdCardFolder)
 	if JSONOutput {

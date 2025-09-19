@@ -12,11 +12,11 @@ import (
 )
 
 type LogLine struct {
-	Duration         time.Duration
-	CorrectTimeStamp time.Time
-	Channel          string
-	Unknown          string
-	NMEAMessage      nmea.Sentence
+	Duration         time.Duration `json:"duration,omitempty"`
+	CorrectTimeStamp time.Time     `json:"correct_time_stamp,omitempty"`
+	Channel          string        `json:"channel,omitempty"`
+	Unknown          string        `json:"unknown,omitempty"`
+	NMEAMessage      nmea.Sentence `json:"nmea_message,omitempty"`
 }
 
 func ParseLogLine(line string) (ll *LogLine, ok bool, err error) {

@@ -6,6 +6,7 @@ import (
 
 	"github.com/samber/do/v2"
 	"github.com/spf13/cobra"
+	"github.com/willie68/osmltools/internal"
 	"github.com/willie68/osmltools/internal/config"
 )
 
@@ -17,7 +18,7 @@ var (
 		Short: "the osml version",
 		Long:  `the open sea map logger tools version`,
 		RunE: func(_ *cobra.Command, _ []string) error {
-			ver := do.MustInvoke[config.Version](nil)
+			ver := do.MustInvoke[config.Version](internal.Inj)
 			if JSONOutput {
 				v, err := ver.JSON()
 				if err != nil {

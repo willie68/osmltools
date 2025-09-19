@@ -21,7 +21,7 @@ func New() *NMEAExporter {
 	}
 }
 
-func (e *NMEAExporter) ExportTrack(track model.Track, output io.Writer) error {
+func (e *NMEAExporter) ExportTrack(track model.TrackPoints, output io.Writer) error {
 	for _, ll := range track.LogLines {
 		fmt.Fprintln(output, ll.NMEAString())
 	}

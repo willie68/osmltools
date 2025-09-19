@@ -10,7 +10,7 @@ import (
 	"github.com/willie68/osmltools/internal/model"
 )
 
-func (e *Exporter) Convert(sdCardFolder string, files []string) (*model.Track, error) {
+func (e *Exporter) Convert(sdCardFolder string, files []string) (*model.TrackPoints, error) {
 	fs, err := os.Stat(sdCardFolder)
 	if err != nil {
 		return nil, err
@@ -36,7 +36,7 @@ func (e *Exporter) Convert(sdCardFolder string, files []string) (*model.Track, e
 		ls = append(ls, ll...)
 	}
 
-	tr := &model.Track{
+	tr := &model.TrackPoints{
 		Name:     sdCardFolder,
 		LogLines: ls,
 	}
