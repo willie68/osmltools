@@ -20,25 +20,27 @@ var exportCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		outputFolder, _ := cmd.Flags().GetString("output")
 		format, _ := cmd.Flags().GetString("format")
+		files, _ := cmd.Flags().GetStringSlice("files")
 		name, _ := cmd.Flags().GetString("name")
 		format = strings.ToUpper(strings.TrimSpace(format))
 		if !slices.Contains(export.SupportedFormats, format) {
 			return fmt.Errorf("the format %s is not supported. Supported formats are: %v", format, export.SupportedFormats)
 		}
-		return Export(sdCardFolder, outputFolder, format, name)
+		return Export(sdCardFolder, outputFolder, files, format, name)
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(exportCmd)
 
+	convertCmd.Flags().StringSliceP("files", "f", []string{}, "files to process, separated by commas")
 	exportCmd.Flags().StringP("output", "o", "./", "output folder. Default is the working dir. Naming track_####.nmea")
-	exportCmd.Flags().StringP("format", "f", export.NMEAFormat, "the format of the output file. Defaults to NMEA, also available: GPX, KML, KMZ, GEOJSON")
+	exportCmd.Flags().StringP("format", "m", export.NMEAFormat, "the format of the output file. Defaults to NMEA, also available: GPX, KML, KMZ, GEOJSON")
 	exportCmd.Flags().StringP("name", "n", "", "give the track a name")
 }
 
 // Export get the exporter and execute it on the sd file set
-func Export(sdCardFolder, outputFolder, format, name string) error {
+func Export(sdCardFolder, outputFolder string, files []string, format, name string) error {
 	exp := do.MustInvoke[export.Exporter](nil)
 	td := time.Now()
 	err := exp.Export(sdCardFolder, outputFolder, format, name)

@@ -61,7 +61,7 @@ func Init(inj do.Injector) {
 }
 
 // Export get the exporter and execute it on the sd file set
-func (e *Exporter) Export(sdCardFolder, outputFolder, format, name string) error {
+func (e *Exporter) Export(sdCardFolder, outputFolder string, files []string, format, name string) error {
 	outTempl := filepath.Join(outputFolder, fmt.Sprintf("track_%%04d.%s", strings.ToLower(format)))
 	e.log.Infof("exporter called: sd %s, out: %s, format: %s", sdCardFolder, outTempl, format)
 
@@ -75,15 +75,17 @@ func (e *Exporter) Export(sdCardFolder, outputFolder, format, name string) error
 	if err != nil {
 		return err
 	}
-	var files []string
-	if fs.IsDir() {
+
+	if fs.IsDir() && (len(files) == 0) {
 		files, err = osml.GetDataFiles(sdCardFolder)
 		if err != nil {
 			return err
 		}
-	} else {
-		// only a single file should be checked
-		files = append(files, sdCardFolder)
+	}
+
+	if !fs.IsDir() {
+		files = append(files, filepath.Base(sdCardFolder))
+		sdCardFolder = filepath.Dir(sdCardFolder)
 	}
 
 	e.log.Infof("Found %d files on sd card", len(files))
@@ -97,7 +99,8 @@ func (e *Exporter) Export(sdCardFolder, outputFolder, format, name string) error
 	today := time.Time{}
 	processedFiles := make([]string, 0)
 
-	for _, lf := range files {
+	for _, file := range files {
+		lf := filepath.Join(sdCardFolder, file)
 		e.log.Infof("analysing file: %s", lf)
 		lss, err := e.chk.AnalyseLoggerFile(nil, lf)
 		if err != nil {
