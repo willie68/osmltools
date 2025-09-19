@@ -23,19 +23,22 @@ var convertCmd = &cobra.Command{
 		logging.Root.SetLevel(logging.None)
 		internal.Init()
 	},
-	RunE: func(_ *cobra.Command, _ []string) error {
-		return Convert(sdCardFolder)
+	RunE: func(cmd *cobra.Command, _ []string) error {
+		files, _ := cmd.Flags().GetStringSlice("files")
+		return Convert(sdCardFolder, files)
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(convertCmd)
+
+	convertCmd.Flags().StringSliceP("files", "f", []string{}, "files to process, separated by commas")
 }
 
 // Convert get the exporter and execute it on the sd file set
-func Convert(sdCardFolder string) error {
+func Convert(sdCardFolder string, files []string) error {
 	exp := do.MustInvoke[export.Exporter](nil)
-	res, err := exp.Convert(sdCardFolder)
+	res, err := exp.Convert(sdCardFolder, files)
 	if err != nil {
 		return err
 	}

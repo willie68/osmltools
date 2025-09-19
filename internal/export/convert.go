@@ -3,27 +3,41 @@ package export
 import (
 	"errors"
 	"os"
+	"path/filepath"
 	"sort"
+	"strings"
 
 	"github.com/willie68/osmltools/internal/model"
 )
 
-func (e *Exporter) Convert(sdCardFile string) (*model.Track, error) {
-	fs, err := os.Stat(sdCardFile)
+func (e *Exporter) Convert(sdCardFolder string, files []string) (*model.Track, error) {
+	fs, err := os.Stat(sdCardFolder)
 	if err != nil {
 		return nil, err
 	}
-	if fs.IsDir() {
+	if fs.IsDir() && (len(files) == 0) {
 		return nil, errors.New("sd card file is not a file")
 	}
-
-	ls, err := e.chk.AnalyseLoggerFile(nil, sdCardFile)
-	if err != nil {
-		return nil, err
+	if !fs.IsDir() {
+		files = append(files, fs.Name())
+		sdCardFolder = filepath.Dir(sdCardFolder)
+	}
+	var ls []*model.LogLine
+	for _, file := range files {
+		file = strings.TrimSpace(file)
+		fp := filepath.Join(sdCardFolder, file)
+		if _, err := os.Stat(fp); err != nil {
+			return nil, err
+		}
+		ll, err := e.chk.AnalyseLoggerFile(nil, fp)
+		if err != nil {
+			return nil, err
+		}
+		ls = append(ls, ll...)
 	}
 
 	tr := &model.Track{
-		Name:     sdCardFile,
+		Name:     sdCardFolder,
 		LogLines: ls,
 	}
 

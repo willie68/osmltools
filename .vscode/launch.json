@@ -68,7 +68,11 @@
             "args": [
                 "convert",
                 "-s",
-                "./testdata/sdcard/DATA001233.DAT"
+                "./testdata/sdcard/DATA001234.DAT",
+                "-f",
+                "DATA001231.DAT, DATA001232.DAT",
+                "-f",
+                "DATA001233.DAT"
             ]
         },
         {
