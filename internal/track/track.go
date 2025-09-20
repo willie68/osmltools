@@ -30,22 +30,22 @@ func Init(inj do.Injector) {
 	do.ProvideValue(inj, trm)
 }
 
-func (m manager) NewTrack(sdCardFolder string, files []string, trackfile string, track model.Track) error {
+func (m *manager) NewTrack(sdCardFolder string, files []string, trackfile string, track model.Track) error {
 	m.log.Infof("Creating new track file %s", trackfile)
 	return nil
 }
 
-func (m manager) AddTrack(sdCardFolder string, files []string, trackfile string) error {
+func (m *manager) AddTrack(sdCardFolder string, files []string, trackfile string) error {
 	m.log.Infof("Adding data to track file %s", trackfile)
 	return nil
 }
 
-func (m manager) DeleteTrack(sdCardFolder string, trackfile string) error {
+func (m *manager) DeleteTrack(sdCardFolder string, trackfile string) error {
 	m.log.Infof("Deleting track file %s", trackfile)
 	return nil
 }
 
-func (m manager) ListTrack(sdCardFolder string, trackfile string) (model.Track, error) {
+func (m *manager) ListTrack(sdCardFolder string, trackfile string) (model.Track, error) {
 	m.log.Infof("Listing track file %s", trackfile)
 	tr := model.Track{
 		Name:        "Testtrack",
@@ -70,15 +70,15 @@ func (m manager) ListTrack(sdCardFolder string, trackfile string) (model.Track, 
 }
 
 // IsOldVersion checks if the given track file is in the old format (contains route.properties)
-func (t *manager) IsOldVersion(tf string) bool {
+func (m *manager) IsOldVersion(tf string) bool {
 	if _, err := os.Stat(tf); err != nil {
-		t.log.Errorf("error zip file %s does not exists: %v", tf, err)
+		m.log.Errorf("error zip file %s does not exists: %v", tf, err)
 		return false
 	}
 
 	r, err := zip.OpenReader(tf)
 	if err != nil {
-		t.log.Errorf("error opening zip file %s: %v", tf, err)
+		m.log.Errorf("error opening zip file %s: %v", tf, err)
 		return false
 	}
 	defer r.Close()
