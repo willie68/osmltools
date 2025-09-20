@@ -5,7 +5,6 @@ import (
 	"io/fs"
 	"path/filepath"
 
-	utils "github.com/willie68/gowillie68/pkg"
 	"github.com/willie68/gowillie68/pkg/fileutils"
 )
 
@@ -15,7 +14,7 @@ var (
 
 func GetDataFiles(sdCardFolder string) ([]string, error) {
 	files := make([]string, 0)
-	if !utils.FileExists(sdCardFolder) {
+	if !fileutils.FileExists(sdCardFolder) {
 		return files, ErrWrongCardFolder
 	}
 	err := fileutils.GetFiles(sdCardFolder, "data", func(fileinfo fs.DirEntry) bool {

@@ -11,7 +11,7 @@ import (
 
 	"github.com/adrianmo/go-nmea"
 	"github.com/samber/do/v2"
-	utils "github.com/willie68/gowillie68/pkg"
+	"github.com/willie68/gowillie68/pkg/fileutils"
 	"github.com/willie68/osmltools/internal/logging"
 	"github.com/willie68/osmltools/internal/model"
 	"github.com/willie68/osmltools/internal/osml"
@@ -246,9 +246,9 @@ func (c *Checker) getRMCTime(ll *model.LogLine, ts time.Time) (time.Time, bool) 
 func (c *Checker) outputToFolder(fr *model.FileResult, lf, of string, ls []*model.LogLine, overwrite bool) error {
 	vesselID, ft := c.getFileInfo(ls)
 	filedate := ft.Format(fmtDateOnly)
-	ofn := fmt.Sprintf("%d-%s-%s.nmea", vesselID, utils.FileNameWithoutExtension(filepath.Base(lf)), filedate)
+	ofn := fmt.Sprintf("%d-%s-%s.nmea", vesselID, fileutils.FileNameWithoutExtension(filepath.Base(lf)), filedate)
 	off := filepath.Join(of, ofn)
-	if !overwrite && utils.FileExists(off) {
+	if !overwrite && fileutils.FileExists(off) {
 		return errors.Join(ErrOutputfileAlreadyExists, fmt.Errorf("output file name: %s", off))
 	}
 	fr.WithFilename(ofn).WithVesselID(vesselID).WithCreated(ft)

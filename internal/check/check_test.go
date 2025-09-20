@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	utils "github.com/willie68/gowillie68/pkg"
+	"github.com/willie68/gowillie68/pkg/fileutils"
 	"github.com/willie68/osmltools/internal/logging"
 	"github.com/willie68/osmltools/internal/osml"
 )
@@ -45,12 +45,12 @@ func (s *CheckSuite) TestCheckBasicCheck() {
 	s.ast.NoError(err)
 	s.ast.Equal(8147, s.chk.ErrorTags)
 	s.ast.Equal(16281, s.chk.UnknownTags)
-	s.ast.True(utils.FileExists(filepath.Join(of, "597-DATA001231-2016-09-11.nmea")))
-	s.ast.True(utils.FileExists(filepath.Join(of, "597-DATA001232-2016-09-11.nmea")))
-	s.ast.True(utils.FileExists(filepath.Join(of, "597-DATA001233-2016-09-11.nmea")))
-	s.ast.True(utils.FileExists(filepath.Join(of, "597-DATA001234-2016-09-11.nmea")))
-	s.ast.True(utils.FileExists(filepath.Join(of, "597-DATA001235-2016-09-11.nmea")))
-	s.ast.True(utils.FileExists(filepath.Join(of, "report.json")))
+	s.ast.True(fileutils.FileExists(filepath.Join(of, "597-DATA001231-2016-09-11.nmea")))
+	s.ast.True(fileutils.FileExists(filepath.Join(of, "597-DATA001232-2016-09-11.nmea")))
+	s.ast.True(fileutils.FileExists(filepath.Join(of, "597-DATA001233-2016-09-11.nmea")))
+	s.ast.True(fileutils.FileExists(filepath.Join(of, "597-DATA001234-2016-09-11.nmea")))
+	s.ast.True(fileutils.FileExists(filepath.Join(of, "597-DATA001235-2016-09-11.nmea")))
+	s.ast.True(fileutils.FileExists(filepath.Join(of, "report.json")))
 }
 
 func (s *CheckSuite) TestCheckWrongSDCardFolder() {
