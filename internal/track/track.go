@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -16,28 +15,25 @@ import (
 
 	"github.com/samber/do/v2"
 	"github.com/willie68/osmltools/internal/check"
+	"github.com/willie68/osmltools/internal/export"
 	"github.com/willie68/osmltools/internal/export/nmeaexporter"
 	"github.com/willie68/osmltools/internal/logging"
 	"github.com/willie68/osmltools/internal/model"
-)
-
-const (
-	mapFile  = "track.nmea"
-	jsonFile = "track.json"
+	"github.com/willie68/osmltools/internal/trackutils"
 )
 
 // Manager the track manager interface
 type Manager interface {
 	NewTrack(sdCardFolder string, files []string, trackfile string, track model.Track) error
 	AddTrack(sdCardFolder string, files []string, trackfile string) error
-	DeleteTrack(sdCardFolder string, trackfile string) error
-	ListTrack(sdCardFolder string, trackfile string) (*model.Track, error)
+	ListTrack(trackfile string) (*model.Track, error)
 }
 
 // Manager the track manager service
 type manager struct {
 	log *logging.Logger
 	chk check.Checker
+	exp export.Exporter
 }
 
 var _ Manager = &manager{}
@@ -47,13 +43,14 @@ func Init(inj do.Injector) {
 	trm := manager{
 		log: logging.New().WithName("Trackmanager"),
 		chk: do.MustInvoke[check.Checker](inj),
+		exp: do.MustInvoke[export.Exporter](inj),
 	}
 	do.ProvideValue(inj, &trm)
 }
 
 func (m *manager) NewTrack(sdCardFolder string, files []string, trackfile string, track model.Track) error {
 	m.log.Infof("Creating new track file %s", trackfile)
-	track.MapFile = mapFile
+	track.MapFile = trackutils.NMEAFile
 
 	ll, err := m.ReadLogFiles(files, sdCardFolder)
 	if err != nil {
@@ -74,7 +71,7 @@ func (m *manager) NewTrack(sdCardFolder string, files []string, trackfile string
 	zipWriter := zip.NewWriter(outFile)
 	defer zipWriter.Close()
 
-	jsf, err := zipWriter.Create(mapFile)
+	jsf, err := zipWriter.Create(trackutils.NMEAFile)
 	if err != nil {
 		m.log.Errorf("Failed to add track.nmea: %v", err)
 	}
@@ -83,24 +80,46 @@ func (m *manager) NewTrack(sdCardFolder string, files []string, trackfile string
 		m.log.Errorf("Failed to export nmea: %v", err)
 	}
 
+	track, err = m.copyFiles2Zip(sdCardFolder, files, zipWriter, track)
+	if err != nil {
+		m.log.Errorf("Failed to add files: %v", err)
+		return err
+	}
+
+	err = m.createTrackJSON(zipWriter, track)
+	if err != nil {
+		m.log.Errorf("Failed to create JSON: %v", err)
+		return err
+	}
+
+	return nil
+}
+
+func (m *manager) createTrackJSON(zipWriter *zip.Writer, track model.Track) error {
+	jsf, err := zipWriter.Create(trackutils.JSONFile)
+	if err != nil {
+		m.log.Errorf("Failed to add track.json: %v", err)
+		return err
+	}
+	err = json.NewEncoder(jsf).Encode(track)
+	if err != nil {
+		m.log.Errorf("error marshal track: %v", err)
+		return err
+	}
+	return nil
+}
+
+func (m *manager) copyFiles2Zip(sdCardFolder string, files []string, zipWriter *zip.Writer, track model.Track) (model.Track, error) {
 	for _, file := range files {
 		sdf := filepath.Join(sdCardFolder, strings.TrimSpace(file))
 		sd, err := addFileToZip(zipWriter, sdf)
 		if err != nil {
 			m.log.Errorf("Failed to add %s: %v", file, err)
+			return track, err
 		}
 		track.Files = append(track.Files, *sd)
 	}
-	jsf, err = zipWriter.Create(jsonFile)
-	if err != nil {
-		m.log.Errorf("Failed to add track.json: %v", err)
-	}
-	err = json.NewEncoder(jsf).Encode(track)
-	if err != nil {
-		m.log.Errorf("error marshal track: %v", err)
-	}
-
-	return nil
+	return track, nil
 }
 
 // addFileToZip adds a file to the given zip.Writer
@@ -139,25 +158,6 @@ func addFileToZip(zipWriter *zip.Writer, filename string) (*model.SourceData, er
 	}
 
 	return &sd, err
-}
-
-func (m *manager) AddTrack(sdCardFolder string, files []string, trackfile string) error {
-	m.log.Infof("Adding data to track file %s", trackfile)
-	if m.IsOldVersion(trackfile) {
-		return errors.New("can't add data to an old track file.")
-	}
-	return nil
-}
-
-func (m *manager) DeleteTrack(sdCardFolder string, trackfile string) error {
-	m.log.Infof("Deleting track file %s", trackfile)
-	return nil
-}
-
-func SplitMultiValueParam(value string) []string {
-	return strings.FieldsFunc(value, func(r rune) bool {
-		return r == ' ' || r == ',' || r == ';'
-	})
 }
 
 func (m *manager) ReadLogFiles(files []string, sdCardFolder string) ([]*model.LogLine, error) {

@@ -5,6 +5,7 @@ import (
 	"github.com/willie68/osmltools/internal/backup"
 	"github.com/willie68/osmltools/internal/check"
 	"github.com/willie68/osmltools/internal/config"
+	"github.com/willie68/osmltools/internal/convert"
 	"github.com/willie68/osmltools/internal/export"
 	"github.com/willie68/osmltools/internal/track"
 )
@@ -19,4 +20,5 @@ func Init() {
 	export.Init(Inj)
 	backup.Init(Inj)
 	track.Init(Inj)
+	convert.Init(Inj)
 }

@@ -48,23 +48,13 @@ var (
 		},
 	}
 
-	deleteTrackCmd = &cobra.Command{
-		Use:    "delete",
-		Short:  "delete a track file",
-		Hidden: false,
-		RunE: func(cmd *cobra.Command, _ []string) error {
-			track, _ := cmd.Flags().GetString("track")
-			return DeleteTrack(sdCardFolder, track)
-		},
-	}
-
 	listTrackCmd = &cobra.Command{
 		Use:    "list",
 		Short:  "list all information about a track file",
 		Hidden: false,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			track, _ := cmd.Flags().GetString("track")
-			return ListTrack(sdCardFolder, track)
+			return ListTrack(track)
 		},
 	}
 )
@@ -82,8 +72,6 @@ func init() {
 	trackCmd.AddCommand(addDataTrackCmd)
 	addDataTrackCmd.Flags().StringSliceP("files", "f", []string{}, "files to process, separated by commas")
 
-	trackCmd.AddCommand(deleteTrackCmd)
-
 	trackCmd.AddCommand(listTrackCmd)
 }
 
@@ -100,9 +88,9 @@ func AddTrack(sdCardFolder string, files []string, trackfile string) error {
 }
 
 // ListTrack lists information about the given track file
-func ListTrack(sdCardFolder string, trackfile string) error {
+func ListTrack(trackfile string) error {
 	tm := do.MustInvokeAs[track.Manager](internal.Inj)
-	tr, err := tm.ListTrack(sdCardFolder, trackfile)
+	tr, err := tm.ListTrack(trackfile)
 	if err == nil {
 		if JSONOutput {
 			js, err := tr.JSON()
@@ -122,10 +110,4 @@ func ListTrack(sdCardFolder string, trackfile string) error {
 		}
 	}
 	return err
-}
-
-// DeleteTrack deletes the given track file
-func DeleteTrack(sdCardFolder string, trackfile string) error {
-	tm := do.MustInvokeAs[track.Manager](internal.Inj)
-	return tm.DeleteTrack(sdCardFolder, trackfile)
 }

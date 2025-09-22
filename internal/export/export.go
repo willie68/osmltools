@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/adrianmo/go-nmea"
 	"github.com/samber/do/v2"
 	"github.com/willie68/osmltools/internal/check"
 	"github.com/willie68/osmltools/internal/export/geojsonexporter"
@@ -166,7 +165,7 @@ func (e *Exporter) exportFile(ls []*model.LogLine, count int, outTempl, name str
 		Name:     name,
 		LogLines: ls,
 	}
-	tr, err := e.GetWaypoints(tr)
+	tr, err := model.GetWaypoints(tr)
 	if err != nil {
 		return err
 	}
@@ -202,68 +201,4 @@ func (e *Exporter) checkExporter(format string) (interfaces.FormatExporter, erro
 		return geojsonexporter.New(), nil
 	}
 	return nil, ErrUnknownExporter
-}
-
-// GetWaypoints extracts the waypoints from the log lines of the track
-func (e *Exporter) GetWaypoints(track *model.TrackPoints) (*model.TrackPoints, error) {
-	e.log.Infof("extracting waypoints from %d log lines", len(track.LogLines))
-
-	track.Waypoints = make([]*model.Waypoint, 0)
-
-	for _, ll := range track.LogLines {
-		if ll.NMEAMessage != nil {
-			switch ll.NMEAMessage.Prefix() {
-			case "GPRMC":
-				rmc, ok := ll.NMEAMessage.(nmea.RMC)
-				if ok && rmc.Validity == "A" { // only valid
-					track.End = &model.Waypoint{
-						Lat:   rmc.Latitude,
-						Lon:   rmc.Longitude,
-						Time:  ll.CorrectTimeStamp,
-						Speed: rmc.Speed,
-						Ele:   0.0,
-					}
-					track.Waypoints = append(track.Waypoints, track.End)
-					if track.Start == nil {
-						track.Start = track.End
-					}
-				}
-			case "GPGGA":
-				if track.End != nil {
-					gga, ok := ll.NMEAMessage.(nmea.GGA)
-					if ok {
-						if track.End.Ele == 0.0 {
-							track.End.Ele = gga.Altitude
-						}
-					}
-				}
-			case "SDDBT":
-				if track.End != nil {
-					dbt, ok := ll.NMEAMessage.(nmea.DBT)
-					if ok {
-						depth := dbt.DepthFeet * 0.3048 // convert feet to meters
-						if track.End.Depth == 0.0 {
-							track.End.Depth = depth
-						}
-					}
-				}
-			case "SDDPT":
-				if track.End != nil {
-					dpt, ok := ll.NMEAMessage.(nmea.DPT)
-					if ok {
-						if track.End.Depth == 0.0 {
-							track.End.Depth = dpt.Depth
-						}
-					}
-				}
-			}
-		}
-	}
-	if track.Start != nil {
-		track.Start.Name = "Start"
-	}
-	if track.End != nil {
-		track.End.Name = "End"
-	}
-	return track, nil
 }

@@ -7,7 +7,7 @@ import (
 	"github.com/samber/do/v2"
 	"github.com/spf13/cobra"
 	"github.com/willie68/osmltools/internal"
-	"github.com/willie68/osmltools/internal/export"
+	"github.com/willie68/osmltools/internal/convert"
 	"github.com/willie68/osmltools/internal/logging"
 	"github.com/willie68/osmltools/internal/model"
 )
@@ -25,7 +25,8 @@ var convertCmd = &cobra.Command{
 	},
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		files, _ := cmd.Flags().GetStringSlice("files")
-		return Convert(sdCardFolder, files)
+		track, _ := cmd.Flags().GetString("track")
+		return Convert(sdCardFolder, files, track)
 	},
 }
 
@@ -33,12 +34,14 @@ func init() {
 	rootCmd.AddCommand(convertCmd)
 
 	convertCmd.Flags().StringSliceP("files", "f", []string{}, "files to process, separated by commas")
+	convertCmd.Flags().StringP("track", "t", "", "the track file to work with")
+
 }
 
 // Convert get the exporter and execute it on the sd file set
-func Convert(sdCardFolder string, files []string) error {
-	exp := do.MustInvoke[export.Exporter](internal.Inj)
-	res, err := exp.Convert(sdCardFolder, files)
+func Convert(sdCardFolder string, files []string, track string) error {
+	cnv := do.MustInvoke[convert.Converter](internal.Inj)
+	res, err := cnv.Convert(sdCardFolder, files, track)
 	if err != nil {
 		return err
 	}

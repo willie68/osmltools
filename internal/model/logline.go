@@ -11,6 +11,10 @@ import (
 	"github.com/willie68/osmltools/internal/osmlnmea"
 )
 
+const (
+	NMEATimeSTampFormat = "2006-01-02 15:04:05.000000"
+)
+
 type LogLine struct {
 	Duration         time.Duration `json:"duration,omitempty"`
 	CorrectTimeStamp time.Time     `json:"correct_time_stamp,omitempty"`
@@ -36,6 +40,32 @@ func ParseLogLine(line string) (ll *LogLine, ok bool, err error) {
 
 	ok = true
 	msg, err := osmlnmea.ParseNMEA(sl[2])
+	var asError *nmea.NotSupportedError
+	if errors.As(err, &asError) {
+		if osmlnmea.IsNMEASentence(ll.Unknown) {
+			return
+		}
+	}
+	ll.NMEAMessage = msg
+	if err != nil {
+		ok = false
+	}
+	return
+}
+
+func ParseNMEALogLine(line string) (ll *LogLine, ok bool, err error) {
+	ts, nmealine := splitAtThirdColon(line)
+	td, err := parseNMEATimestamp(ts)
+	if err != nil {
+		return nil, false, fmt.Errorf("invalid time format: %w", err)
+	}
+	ll = &LogLine{
+		CorrectTimeStamp: td,
+		Unknown:          nmealine,
+	}
+
+	ok = true
+	msg, err := osmlnmea.ParseNMEA(nmealine)
 	var asError *nmea.NotSupportedError
 	if errors.As(err, &asError) {
 		if osmlnmea.IsNMEASentence(ll.Unknown) {
@@ -110,5 +140,22 @@ func formatLoggerDuration(d time.Duration) string {
 }
 
 func formatNMEATime(t time.Time) string {
-	return t.Format("2006-01-02 15:04:05.000000")
+	return t.Format(NMEATimeSTampFormat)
+}
+
+func parseNMEATimestamp(l string) (time.Time, error) {
+	return time.Parse(NMEATimeSTampFormat, l)
+}
+
+func splitAtThirdColon(s string) (before string, after string) {
+	parts := strings.SplitN(s, ":", 4) // max 4 Teile: 3 Doppelpunkte + Rest
+
+	if len(parts) < 4 {
+		// Weniger als 3 Doppelpunkte vorhanden
+		return s, ""
+	}
+
+	before = strings.Join(parts[:3], ":")
+	after = parts[3]
+	return
 }

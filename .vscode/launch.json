@@ -143,6 +143,41 @@
                 "./testdata/tracks/track0000.zip",
                 "--json"
             ],
-        }
+        },
+        {
+            "name": "osml add track",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/cmd/osml/main.go",
+            "output" : "${workspaceFolder}/debug.exe",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "track",
+                "add",
+                "-s",
+                "./testdata/sdcard/",
+                "-f",
+                "DATA001234.DAT, DATA001235.DAT",
+                "-t",
+                "./testdata/tracks/track0000.zip",
+                "--json"
+            ],
+         },
+        {
+            "name": "osml convert track",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/cmd/osml/main.go",
+            "output" : "${workspaceFolder}/debug.exe",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "convert",
+                "-t",
+                "./testdata/tracks/track0000.zip",
+                "--json"
+            ]
+       }
     ]
 }

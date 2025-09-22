@@ -5,34 +5,12 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"os"
 	"strconv"
 	"strings"
 
+	"github.com/willie68/gowillie68/pkg/extstrgutils"
 	"github.com/willie68/osmltools/internal/model"
 )
-
-// IsOldVersion checks if the given track file is in the old format (contains route.properties)
-func (m *manager) IsOldVersion(tf string) bool {
-	if _, err := os.Stat(tf); err != nil {
-		m.log.Errorf("error zip file %s does not exists: %v", tf, err)
-		return false
-	}
-
-	r, err := zip.OpenReader(tf)
-	if err != nil {
-		m.log.Errorf("error opening zip file %s: %v", tf, err)
-		return false
-	}
-	defer r.Close()
-
-	for _, f := range r.File {
-		if f.Name == "route.properties" {
-			return true
-		}
-	}
-	return false
-}
 
 func (m *manager) routeProps2track(track *model.Track, f *zip.File) error {
 	rc, err := f.Open()
@@ -78,8 +56,8 @@ func (m *manager) props2Track(track *model.Track, props map[string]string) {
 	track.Description = props["comment"]
 	track.Name = props["name"]
 	track.Files = make([]model.SourceData, 0)
-	files := SplitMultiValueParam(props["dataFiles"])
-	md5s := SplitMultiValueParam(props["dataMD5"])
+	files := extstrgutils.SplitMultiValueParam(props["dataFiles"])
+	md5s := extstrgutils.SplitMultiValueParam(props["dataMD5"])
 	for x, f := range files {
 		sd := model.SourceData{
 			FileName: f,

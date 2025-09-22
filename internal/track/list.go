@@ -7,11 +7,12 @@ import (
 	"os"
 
 	"github.com/willie68/osmltools/internal/model"
+	"github.com/willie68/osmltools/internal/trackutils"
 )
 
-func (m *manager) ListTrack(sdCardFolder string, trackfile string) (*model.Track, error) {
+func (m *manager) ListTrack(trackfile string) (*model.Track, error) {
 	m.log.Infof("Listing track file %s", trackfile)
-	if m.IsOldVersion(trackfile) {
+	if model.IsOldTrackVersion(trackfile) {
 		return m.ListOldTrack(trackfile)
 	}
 	return m.ListNewTrack(trackfile)
@@ -29,7 +30,7 @@ func (m *manager) ListNewTrack(tf string) (*model.Track, error) {
 	defer r.Close()
 	track := model.Track{}
 	for _, f := range r.File {
-		if f.Name == jsonFile {
+		if f.Name == trackutils.JSONFile {
 			rc, err := f.Open()
 			if err != nil {
 				return nil, fmt.Errorf("error opening json file %s: %v", f.Name, err)
