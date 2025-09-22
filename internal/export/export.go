@@ -90,10 +90,30 @@ func (e *Exporter) Export(sdCardFolder, outputFolder string, files []string, for
 
 	e.log.Infof("Found %d files on sd card", len(files))
 
+	ls, count, processedFiles, err := ReadLogFiles(files, sdCardFolder, e, outTempl, name)
+	if err != nil {
+		return err
+	}
+
 	err = os.MkdirAll(outputFolder, os.ModePerm)
 	if err != nil {
 		return err
 	}
+	err = e.exportFile(ls, count, outTempl, name, processedFiles)
+	if err != nil {
+		return err
+	}
+
+	js, err := json.MarshalIndent(e.tracks, "", "  ")
+	if err != nil {
+		return err
+	}
+	of := filepath.Join(outputFolder, "tracks.json")
+	err = os.WriteFile(of, js, os.ModePerm)
+	return err
+}
+
+func ReadLogFiles(files []string, sdCardFolder string, e *Exporter, outTempl string, name string) ([]*model.LogLine, int, []string, error) {
 	ls := make([]*model.LogLine, 0)
 	count := 0
 	today := time.Time{}
@@ -104,11 +124,11 @@ func (e *Exporter) Export(sdCardFolder, outputFolder string, files []string, for
 		e.log.Infof("analysing file: %s", lf)
 		lss, err := e.chk.AnalyseLoggerFile(nil, lf)
 		if err != nil {
-			return err
+			return nil, 0, nil, err
 		}
 		lss, _, err = e.chk.CorrectTimeStamp(lss)
 		if err != nil {
-			return err
+			return nil, 0, nil, err
 		}
 		if len(lss) > 0 {
 			if today.IsZero() {
@@ -128,27 +148,16 @@ func (e *Exporter) Export(sdCardFolder, outputFolder string, files []string, for
 		}
 	}
 
-	err = e.exportFile(ls, count, outTempl, name, processedFiles)
-	if err != nil {
-		return err
-	}
-
-	js, err := json.MarshalIndent(e.tracks, "", "  ")
-	if err != nil {
-		return err
-	}
-	of := filepath.Join(outputFolder, "tracks.json")
-	err = os.WriteFile(of, js, os.ModePerm)
-	return err
+	sort.Slice(ls, func(i, j int) bool {
+		return ls[i].CorrectTimeStamp.Before(ls[j].CorrectTimeStamp)
+	})
+	return ls, count, processedFiles, nil
 }
 
 func (e *Exporter) exportFile(ls []*model.LogLine, count int, outTempl, name string, filelist []string) error {
 	if len(ls) == 0 {
 		return nil
 	}
-	sort.Slice(ls, func(i, j int) bool {
-		return ls[i].CorrectTimeStamp.Before(ls[j].CorrectTimeStamp)
-	})
 	if name == "" {
 		name = fmt.Sprintf("Track %04d", count)
 	}

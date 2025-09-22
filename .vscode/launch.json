@@ -110,11 +110,19 @@
             "cwd": "${workspaceFolder}",
             "args": [
                 "track",
-                "list",
+                "new",
                 "-s",
                 "./testdata/sdcard/",
+                "-f",
+                "DATA001231.DAT, DATA001232.DAT, DATA001233.DAT",
+                "-n",
+                "zürichsee 3",
+                "-d",
+                "description of Zürichsee",
+                "-v",
+                "1234",
                 "-t",
-                "./testdata/sdcard/tracks/TRACK0001.zip",
+                "./testdata/tracks/track0000.zip",
                 "--json"
             ],
         }
