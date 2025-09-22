@@ -110,6 +110,24 @@
             "cwd": "${workspaceFolder}",
             "args": [
                 "track",
+                "list",
+                "-s",
+                "./testdata/sdcard/",
+                "-t",
+                "./testdata/tracks/track0000.zip",
+                "--json"
+            ],
+        },
+        {
+            "name": "osml new track",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/cmd/osml/main.go",
+            "output" : "${workspaceFolder}/debug.exe",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "track",
                 "new",
                 "-s",
                 "./testdata/sdcard/",

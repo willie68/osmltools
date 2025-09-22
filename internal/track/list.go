@@ -2,6 +2,7 @@ package track
 
 import (
 	"archive/zip"
+	"encoding/json"
 	"fmt"
 	"os"
 
@@ -16,27 +17,33 @@ func (m *manager) ListTrack(sdCardFolder string, trackfile string) (*model.Track
 	return m.ListNewTrack(trackfile)
 }
 
-func (m *manager) ListNewTrack(trackfile string) (*model.Track, error) {
-	tr := model.Track{
-		Name:        "Testtrack",
-		Description: "This is a test track",
-		VesselID:    1234,
-		Files: []model.SourceData{
-			{
-				FileName: "data1.log",
-				Size:     123456,
-				Hash:     "abcdef1234567890",
-			},
-			{
-				FileName: "data2.log",
-				Size:     654321,
-				Hash:     "098765fedcba",
-			},
-		},
-		MapFile: mapFile,
+func (m *manager) ListNewTrack(tf string) (*model.Track, error) {
+	if _, err := os.Stat(tf); err != nil {
+		return nil, fmt.Errorf("error zip file %s does not exists: %v", tf, err)
 	}
-	return &tr, nil
-	//return model.Track{}, nil
+
+	r, err := zip.OpenReader(tf)
+	if err != nil {
+		return nil, fmt.Errorf("error opening zip file %s: %v", tf, err)
+	}
+	defer r.Close()
+	track := model.Track{}
+	for _, f := range r.File {
+		if f.Name == jsonFile {
+			rc, err := f.Open()
+			if err != nil {
+				return nil, fmt.Errorf("error opening json file %s: %v", f.Name, err)
+			}
+			defer rc.Close()
+
+			err = json.NewDecoder(rc).Decode(&track)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+	}
+	return &track, nil
 }
 
 func (m *manager) ListOldTrack(tf string) (*model.Track, error) {
