@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/samber/do/v2"
@@ -78,13 +79,37 @@ func init() {
 // NewTrack creates a new track file and adds the given data files to it
 func NewTrack(sdCardFolder string, files []string, trackfile string, tr model.Track) error {
 	tm := do.MustInvokeAs[track.Manager](internal.Inj)
-	return tm.NewTrack(sdCardFolder, files, trackfile, tr)
+	err := tm.NewTrack(sdCardFolder, files, trackfile, tr)
+	if err == nil {
+		if JSONOutput {
+			js, err := json.Marshal(model.GeneralResult{Result: true})
+			if err != nil {
+				return err
+			}
+			fmt.Println(string(js))
+			return nil
+		}
+		fmt.Println("ok")
+	}
+	return err
 }
 
 // AddTrack add  data files to an existing track file
 func AddTrack(sdCardFolder string, files []string, trackfile string) error {
 	tm := do.MustInvokeAs[track.Manager](internal.Inj)
-	return tm.AddTrack(sdCardFolder, files, trackfile)
+	err := tm.AddTrack(sdCardFolder, files, trackfile)
+	if err == nil {
+		if JSONOutput {
+			js, err := json.Marshal(model.GeneralResult{Result: true})
+			if err != nil {
+				return err
+			}
+			fmt.Println(string(js))
+			return nil
+		}
+		fmt.Println("ok")
+	}
+	return err
 }
 
 // ListTrack lists information about the given track file

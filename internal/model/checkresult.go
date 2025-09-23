@@ -5,6 +5,11 @@ import (
 	"time"
 )
 
+type GeneralResult struct {
+	Result  bool   `json:"result"`
+	Message string `json:"message"`
+}
+
 type CheckResult struct {
 	Created      time.Time              `json:"created"`
 	ErrorCount   int                    `json:"errorCount"`
