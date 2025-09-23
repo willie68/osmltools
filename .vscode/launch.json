@@ -175,7 +175,7 @@
             "args": [
                 "convert",
                 "-t",
-                "E:\\cloud\\nxt_willie\\Software\\MCSDepthLogger\\Tracks\\Zürichsee.zip",
+                "C:/e-platte/cloudspace/nxt_willie/Software/MCSDepthLogger/Tracks/Vessel.zip",
                 "--json"
             ]
        }

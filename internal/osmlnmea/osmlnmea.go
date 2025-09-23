@@ -2,6 +2,7 @@ package osmlnmea
 
 import (
 	"regexp"
+	"strings"
 
 	"github.com/adrianmo/go-nmea"
 )
@@ -174,7 +175,7 @@ func init() {
 
 func ParseNMEA(line string) (nmea.Sentence, error) {
 	actual = nil
-	nm, err := sp.Parse(line)
+	nm, err := sp.Parse(strings.TrimSpace(line))
 	if err != nil {
 		return actual, err
 	}

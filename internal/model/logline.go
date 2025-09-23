@@ -69,7 +69,7 @@ func ParseNMEALogLine(line string, oldFormat bool) (ll *LogLine, ok bool, err er
 	}
 
 	ok = true
-	msg, err := osmlnmea.ParseNMEA(nmealine)
+	msg, err := osmlnmea.ParseNMEA(ll.Unknown)
 	var asError *nmea.NotSupportedError
 	if errors.As(err, &asError) {
 		if osmlnmea.IsNMEASentence(ll.Unknown) {
