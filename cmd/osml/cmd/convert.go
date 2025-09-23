@@ -35,7 +35,6 @@ func init() {
 
 	convertCmd.Flags().StringSliceP("files", "f", []string{}, "files to process, separated by commas")
 	convertCmd.Flags().StringP("track", "t", "", "the track file to work with")
-
 }
 
 // Convert get the exporter and execute it on the sd file set

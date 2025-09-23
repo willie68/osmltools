@@ -60,7 +60,7 @@ func (m *manager) ListOldTrack(tf string) (*model.Track, error) {
 	track := model.Track{}
 	for _, f := range r.File {
 		if f.Name == "route.properties" {
-			err := m.routeProps2track(&track, f)
+			err := trackutils.RouteProps2track(&track, f)
 			if err != nil {
 				return nil, err
 			}

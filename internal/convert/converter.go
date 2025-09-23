@@ -29,7 +29,7 @@ func Init(inj do.Injector) {
 
 func (c *Converter) Convert(sdCardFolder string, files []string, track string) (tps *model.TrackPoints, err error) {
 	if track != "" {
-		tps, err = c.convertTrack(track)
+		tps, err = c.TrackPoints(track)
 		if err != nil {
 			return nil, err
 		}
@@ -42,14 +42,20 @@ func (c *Converter) Convert(sdCardFolder string, files []string, track string) (
 	return tps, nil
 }
 
-func (c *Converter) convertTrack(trackfile string) (*model.TrackPoints, error) {
-	track, nmealines, err := trackutils.ReadTrackAndNmea(trackfile)
-	if err != nil {
-		return nil, err
+func (c *Converter) TrackPoints(trackfile string) (*model.TrackPoints, error) {
+	if model.IsOldTrackVersion(trackfile) {
+		return c.OldTrackPoints(trackfile)
 	}
+	return c.NewTrackPoints(trackfile)
+}
+
+func (c *Converter) NewTrackPoints(trackfile string) (*model.TrackPoints, error) {
+	track, nmealines, err := trackutils.ReadTrackAndNmea(trackfile)
+
 	lls := make([]*model.LogLine, 0, len(nmealines))
+
 	for _, l := range nmealines {
-		ll, ok, err := model.ParseNMEALogLine(l)
+		ll, ok, err := model.ParseNMEALogLine(l, false)
 		if err != nil {
 			return nil, err
 		}
@@ -63,11 +69,42 @@ func (c *Converter) convertTrack(trackfile string) (*model.TrackPoints, error) {
 		Name:     track.Name,
 		LogLines: lls,
 	}
+
 	tps, err = model.GetWaypoints(tps)
 	if err != nil {
 		return nil, err
 	}
+	return tps, nil
+}
 
+func (c *Converter) OldTrackPoints(trackfile string) (*model.TrackPoints, error) {
+	track, nmealines, err := trackutils.ReadOldTrackAndNmea(trackfile)
+
+	if err != nil {
+		return nil, err
+	}
+	lls := make([]*model.LogLine, 0, len(nmealines))
+
+	for _, l := range nmealines {
+		ll, ok, err := model.ParseNMEALogLine(l, true)
+		if err != nil {
+			c.log.Errorf("error parsing nmea line: %v", err)
+		}
+		if ok {
+			lls = append(lls, ll)
+		}
+	}
+
+	// merge nmea with logline list
+	tps := &model.TrackPoints{
+		Name:     track.Name,
+		LogLines: lls,
+	}
+
+	tps, err = model.GetWaypoints(tps)
+	if err != nil {
+		return nil, err
+	}
 	return tps, nil
 }
 
@@ -118,47 +155,4 @@ func (c *Converter) convertData(sdCardFolder string, files []string) (*model.Tra
 	}
 
 	return tr, nil
-}
-
-func (c *Converter) TrackPoints(trackfile string) (*model.TrackPoints, error) {
-	if model.IsOldTrackVersion(trackfile) {
-		return c.OldTrackPoints(trackfile)
-	}
-	return c.NewTrackPoints(trackfile)
-}
-
-func (c *Converter) NewTrackPoints(trackfile string) (*model.TrackPoints, error) {
-	track, nmealines, err := trackutils.ReadTrackAndNmea(trackfile)
-
-	lls := make([]*model.LogLine, 0, len(nmealines))
-
-	for _, l := range nmealines {
-		ll, ok, err := model.ParseNMEALogLine(l)
-		if err != nil {
-			return nil, err
-		}
-		if ok {
-			lls = append(lls, ll)
-		}
-	}
-
-	// merge nmea with logline list
-	tps := &model.TrackPoints{
-		Name:     track.Name,
-		LogLines: lls,
-	}
-
-	tps, err = model.GetWaypoints(tps)
-	if err != nil {
-		return nil, err
-	}
-	return tps, nil
-}
-
-func (c *Converter) OldTrackPoints(trackfile string) (*model.TrackPoints, error) {
-	//track, lines, err := m.readOldTrackAndNmea(trackfile)
-	//if err != nil {
-	//	return nil, err
-	//}
-	return nil, errors.New("not implemented")
 }

@@ -53,15 +53,19 @@ func ParseLogLine(line string) (ll *LogLine, ok bool, err error) {
 	return
 }
 
-func ParseNMEALogLine(line string) (ll *LogLine, ok bool, err error) {
-	ts, nmealine := splitAtThirdColon(line)
-	td, err := parseNMEATimestamp(ts)
-	if err != nil {
-		return nil, false, fmt.Errorf("invalid time format: %w", err)
-	}
+func ParseNMEALogLine(line string, oldFormat bool) (ll *LogLine, ok bool, err error) {
+	nmealine := line
 	ll = &LogLine{
-		CorrectTimeStamp: td,
-		Unknown:          nmealine,
+		Unknown: nmealine,
+	}
+	if !oldFormat {
+		ts, nmealine := splitAtThirdColon(line)
+		td, err := parseNMEATimestamp(ts)
+		if err != nil {
+			return nil, false, fmt.Errorf("invalid time format: %w", err)
+		}
+		ll.CorrectTimeStamp = td
+		ll.Unknown = nmealine
 	}
 
 	ok = true

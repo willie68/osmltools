@@ -1,10 +1,11 @@
-package track
+package trackutils
 
 import (
 	"archive/zip"
 	"bufio"
 	"fmt"
 	"io"
+	"os"
 	"strconv"
 	"strings"
 
@@ -12,22 +13,51 @@ import (
 	"github.com/willie68/osmltools/internal/model"
 )
 
-func (m *manager) routeProps2track(track *model.Track, f *zip.File) error {
+func ReadOldTrackAndNmea(trackfile string) (*model.Track, []string, error) {
+	if _, err := os.Stat(trackfile); err != nil {
+		return nil, nil, fmt.Errorf("error zip file %s does not exists: %v", trackfile, err)
+	}
+	r, err := zip.OpenReader(trackfile)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error opening zip file %s: %v", trackfile, err)
+	}
+	defer r.Close()
+	track := model.Track{}
+	lines := []string{}
+	for _, f := range r.File {
+		if f.Name == "route.properties" {
+			err := RouteProps2track(&track, f)
+			if err != nil {
+				return nil, nil, err
+			}
+		}
+		if f.Name == NMEAFile {
+			lines, err = NMEA(f)
+			if err != nil {
+				return nil, nil, err
+			}
+		}
+	}
+
+	return &track, lines, nil
+}
+
+func RouteProps2track(track *model.Track, f *zip.File) error {
 	rc, err := f.Open()
 	if err != nil {
 		return fmt.Errorf("error opening route properties file %s: %v", f.Name, err)
 	}
 	defer rc.Close()
-	props, err := m.readProps(rc, err)
+	props, err := ReadProps(rc, err)
 	if err != nil {
 		return err
 	}
 
-	m.props2Track(track, props)
+	Props2Track(track, props)
 	return nil
 }
 
-func (m *manager) readProps(rc io.ReadCloser, err error) (map[string]string, error) {
+func ReadProps(rc io.ReadCloser, err error) (map[string]string, error) {
 	props := make(map[string]string)
 	scanner := bufio.NewScanner(rc)
 	for scanner.Scan() {
@@ -52,7 +82,7 @@ func (m *manager) readProps(rc io.ReadCloser, err error) (map[string]string, err
 	return props, nil
 }
 
-func (m *manager) props2Track(track *model.Track, props map[string]string) {
+func Props2Track(track *model.Track, props map[string]string) {
 	track.Description = props["comment"]
 	track.Name = props["name"]
 	track.Files = make([]model.SourceData, 0)

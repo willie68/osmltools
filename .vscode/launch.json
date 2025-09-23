@@ -175,7 +175,7 @@
             "args": [
                 "convert",
                 "-t",
-                "./testdata/tracks/track0000.zip",
+                "E:\\cloud\\nxt_willie\\Software\\MCSDepthLogger\\Tracks\\Zürichsee.zip",
                 "--json"
             ]
        }

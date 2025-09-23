@@ -33,7 +33,7 @@ func (m *manager) AddTrack(sdCardFolder string, files []string, trackfile string
 	}
 	lls := make([]*model.LogLine, 0, len(nmealines))
 	for _, l := range nmealines {
-		ll, ok, err := model.ParseNMEALogLine(l)
+		ll, ok, err := model.ParseNMEALogLine(l, false)
 		if err != nil {
 			return err
 		}
