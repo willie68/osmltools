@@ -190,7 +190,7 @@
             "args": [
                 "touch",
                 "-s",
-                "./testdata/sdcard/DATA001234.DAT",
+                "F:/",
                 "-f",
                 "DATA001231.DAT, DATA001232.DAT",
                 "-f",

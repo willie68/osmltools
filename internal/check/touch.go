@@ -33,26 +33,31 @@ func (c *Checker) Touch(sdCardFolder string, files []string) (*model.GeneralResu
 	}
 
 	gr := model.NewGeneralResult()
+	gr.Result = true
 	for _, file := range files {
 		off := filepath.Join(sdCardFolder, strings.TrimSpace(file))
 		if !fileutils.FileExists(off) {
-			return nil, fmt.Errorf("file %s not exists", off)
+			gr.Result = false
+			gr.Messages = append(gr.Messages, fmt.Sprintf("file %s not exists", off))
+			continue
 		}
 		ts, err := c.getFirstTimestamp(off)
 		if err != nil {
 			gr.Result = false
-			gr.Messages = append(gr.Messages, fmt.Sprintf("error getting timestamp from file %s: %s\r\n", off, err.Error()))
+			gr.Messages = append(gr.Messages, fmt.Sprintf("error getting timestamp from file %s: %s", off, err.Error()))
 			continue
 		}
 		err = os.Chtimes(off, time.Unix(0, 0), ts)
 		if err != nil {
-			gr.Result = false
-			gr.Messages = append(gr.Messages, fmt.Sprintf("error touching file %s: %s\r\n", off, err.Error()))
-			continue
+			err1 := c.modifyFileTime(off, ts)
+			if err1 != nil {
+				gr.Result = false
+				gr.Messages = append(gr.Messages, fmt.Sprintf("error touching file %s: %s", off, err.Error()))
+				continue
+			}
 		}
-		gr.Messages = append(gr.Messages, fmt.Sprintf("touched file %s to %s\r\n", off, ts.String()))
+		gr.Messages = append(gr.Messages, fmt.Sprintf("touched file %s to %s", off, ts.String()))
 	}
-	gr.Result = true
 	return gr, nil
 }
 

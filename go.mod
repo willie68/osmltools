@@ -12,6 +12,7 @@ require (
 	github.com/twpayne/go-gpx v1.5.0
 	github.com/twpayne/go-kml/v3 v3.3.0
 	github.com/willie68/gowillie68 v0.0.1
+	golang.org/x/sys v0.36.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 )
 
