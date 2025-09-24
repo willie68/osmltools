@@ -178,6 +178,25 @@
                 "C:/e-platte/cloudspace/nxt_willie/Software/MCSDepthLogger/Tracks/Vessel.zip",
                 "--json"
             ]
-       }
+         },
+        {
+            "name": "osml touch",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/cmd/osml/main.go",
+            "output" : "${workspaceFolder}/debug.exe",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "touch",
+                "-s",
+                "./testdata/sdcard/DATA001234.DAT",
+                "-f",
+                "DATA001231.DAT, DATA001232.DAT",
+                "-f",
+                "DATA001233.DAT",
+                "--json"
+            ]
+      }
     ]
 }

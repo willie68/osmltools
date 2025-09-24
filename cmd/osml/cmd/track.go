@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/samber/do/v2"
@@ -82,11 +81,7 @@ func NewTrack(sdCardFolder string, files []string, trackfile string, tr model.Tr
 	err := tm.NewTrack(sdCardFolder, files, trackfile, tr)
 	if err == nil {
 		if JSONOutput {
-			js, err := json.Marshal(model.GeneralResult{Result: true})
-			if err != nil {
-				return err
-			}
-			fmt.Println(string(js))
+			fmt.Println(model.GeneralResult{Result: true}.JSON())
 			return nil
 		}
 		fmt.Println("ok")
@@ -100,11 +95,7 @@ func AddTrack(sdCardFolder string, files []string, trackfile string) error {
 	err := tm.AddTrack(sdCardFolder, files, trackfile)
 	if err == nil {
 		if JSONOutput {
-			js, err := json.Marshal(model.GeneralResult{Result: true})
-			if err != nil {
-				return err
-			}
-			fmt.Println(string(js))
+			fmt.Println(model.GeneralResult{Result: true}.JSON())
 			return nil
 		}
 		fmt.Println("ok")

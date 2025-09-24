@@ -6,8 +6,8 @@ import (
 )
 
 type GeneralResult struct {
-	Result  bool   `json:"result"`
-	Message string `json:"message"`
+	Result   bool     `json:"result"`
+	Messages []string `json:"message"`
 }
 
 type CheckResult struct {
@@ -33,6 +33,13 @@ type FileResult struct {
 	ErrorA         int       `json:"errorA"`
 	ErrorB         int       `json:"errorB"`
 	ErrorI         int       `json:"errorI"`
+}
+
+func NewGeneralResult() *GeneralResult {
+	return &GeneralResult{
+		Result:   true,
+		Messages: make([]string, 0),
+	}
 }
 
 func NewCheckResult() *CheckResult {
@@ -157,4 +164,12 @@ func (f *FileResult) WithFirstTimestamp(ts time.Time) *FileResult {
 func (f *FileResult) WithLastTimestamp(ts time.Time) *FileResult {
 	f.LastTimestamt = ts
 	return f
+}
+
+func (g GeneralResult) JSON() string {
+	js, err := json.MarshalIndent(g, "", "    ")
+	if err != nil {
+		panic(err)
+	}
+	return string(js)
 }
