@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/samber/do/v2"
+	"github.com/willie68/gowillie68/pkg/fileutils"
 	"github.com/willie68/osmltools/internal/check"
 	"github.com/willie68/osmltools/internal/export/geojsonexporter"
 	"github.com/willie68/osmltools/internal/export/gpxexporter"
@@ -20,6 +21,7 @@ import (
 	"github.com/willie68/osmltools/internal/logging"
 	"github.com/willie68/osmltools/internal/model"
 	"github.com/willie68/osmltools/internal/osml"
+	"github.com/willie68/osmltools/internal/trackutils"
 )
 
 const (
@@ -112,6 +114,47 @@ func (e *Exporter) Export(sdCardFolder, outputFolder string, files []string, for
 	return err
 }
 
+// Export get the exporter and execute it on the sd file set
+func (e *Exporter) ExportTrack(trackfile, outputfile, format string) error {
+	e.log.Infof("track exporter called: track %s, out: %s, format: %s", trackfile, outputfile, format)
+
+	exp, err := e.checkExporter(format)
+	if err != nil {
+		return err
+	}
+	e.exp = exp
+
+	if !fileutils.FileExists(trackfile) {
+		return fmt.Errorf("the track file %s does not exist", trackfile)
+	}
+
+	if model.IsOldTrackVersion(trackfile) {
+		return fmt.Errorf("can't export an old track file %s", trackfile)
+	}
+
+	track, nmealines, err := trackutils.ReadTrackAndNmea(trackfile)
+	if err != nil {
+		return err
+	}
+
+	lls, err := model.ParseLines2LogLines(nmealines, false)
+	if err != nil {
+		return err
+	}
+
+	err = os.MkdirAll(filepath.Dir(outputfile), os.ModePerm)
+	if err != nil {
+		return err
+	}
+
+	err = e.exportTrackFile(lls, track.Name, outputfile)
+	if err != nil {
+		return err
+	}
+
+	return err
+}
+
 func ReadLogFiles(files []string, sdCardFolder string, e *Exporter, outTempl string, name string) ([]*model.LogLine, int, []string, error) {
 	ls := make([]*model.LogLine, 0)
 	count := 0
@@ -182,6 +225,33 @@ func (e *Exporter) exportFile(ls []*model.LogLine, count int, outTempl, name str
 	defer fs.Close()
 
 	e.log.Infof("exporting %d loglines to %s", len(ls), of)
+	return e.exp.ExportTrack(*tr, fs)
+}
+
+func (e *Exporter) exportTrackFile(ls []*model.LogLine, name, outputfile string) error {
+	if len(ls) == 0 {
+		return nil
+	}
+	tr := &model.TrackPoints{
+		Name:     name,
+		LogLines: ls,
+	}
+	tr, err := model.GetWaypoints(tr)
+	if err != nil {
+		return err
+	}
+
+	if err := os.MkdirAll(filepath.Dir(outputfile), os.ModePerm); err != nil {
+		return err
+	}
+
+	fs, err := os.Create(outputfile)
+	if err != nil {
+		return err
+	}
+	defer fs.Close()
+
+	e.log.Infof("exporting %d loglines to %s", len(ls), outputfile)
 	return e.exp.ExportTrack(*tr, fs)
 }
 

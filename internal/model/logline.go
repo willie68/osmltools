@@ -23,6 +23,20 @@ type LogLine struct {
 	NMEAMessage      nmea.Sentence `json:"nmea_message,omitempty"`
 }
 
+func ParseLines2LogLines(nmealines []string, oldFormat bool) (lls []*LogLine, err error) {
+	lls = make([]*LogLine, 0, len(nmealines))
+	for _, l := range nmealines {
+		ll, ok, err := ParseNMEALogLine(l, oldFormat)
+		if err != nil {
+			return nil, err
+		}
+		if ok {
+			lls = append(lls, ll)
+		}
+	}
+	return
+}
+
 func ParseLogLine(line string) (ll *LogLine, ok bool, err error) {
 	sl := strings.SplitN(line, ";", 3)
 	if len(sl) < 3 {

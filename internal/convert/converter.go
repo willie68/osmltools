@@ -52,16 +52,9 @@ func (c *Converter) TrackPoints(trackfile string) (*model.TrackPoints, error) {
 func (c *Converter) NewTrackPoints(trackfile string) (*model.TrackPoints, error) {
 	track, nmealines, err := trackutils.ReadTrackAndNmea(trackfile)
 
-	lls := make([]*model.LogLine, 0, len(nmealines))
-
-	for _, l := range nmealines {
-		ll, ok, err := model.ParseNMEALogLine(l, false)
-		if err != nil {
-			return nil, err
-		}
-		if ok {
-			lls = append(lls, ll)
-		}
+	lls, err := model.ParseLines2LogLines(nmealines, false)
+	if err != nil {
+		return nil, err
 	}
 
 	// merge nmea with logline list

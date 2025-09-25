@@ -39,15 +39,10 @@ func (m *manager) AddTrack(sdCardFolder string, files []string, trackfile string
 	if err != nil {
 		return err
 	}
-	lls := make([]*model.LogLine, 0, len(nmealines))
-	for _, l := range nmealines {
-		ll, ok, err := model.ParseNMEALogLine(l, false)
-		if err != nil {
-			return err
-		}
-		if ok {
-			lls = append(lls, ll)
-		}
+
+	lls, err := model.ParseLines2LogLines(nmealines, false)
+	if err != nil {
+		return err
 	}
 
 	// merge nmea with logline list

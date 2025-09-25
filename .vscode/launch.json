@@ -46,15 +46,13 @@
             "cwd": "${workspaceFolder}",
             "args": [
                 "export",
-                "-s",
-                "./testdata/sdcard/DATA001233.DAT",
+                "-t",
+                "./testdata/newtrack/Zürichsee2.zip",
                 "-o",
-                "./testdata/tmp/",
-                "-f",
-                "json",
-                "-n",
-                "my new track",
-                ""
+                "./testdata/tmp/track.gpx",
+                "--format",
+                "GPX",
+                "--json"
             ]
         },
         {
