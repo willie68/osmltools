@@ -3,10 +3,10 @@ package track
 import (
 	"archive/zip"
 	"errors"
-	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 
 	"github.com/willie68/osmltools/internal/export/nmeaexporter"
 	"github.com/willie68/osmltools/internal/model"
@@ -18,6 +18,14 @@ func (m *manager) AddTrack(sdCardFolder string, files []string, trackfile string
 	m.log.Infof("Adding data to track file %s", trackfile)
 	if model.IsOldTrackVersion(trackfile) {
 		return errors.New("can't add data to an old track file")
+	}
+
+	fs := m.getFileList(trackfile)
+	for _, f := range files {
+		fn := filepath.Base(f)
+		if slices.Contains(fs, fn) {
+			return errors.New("file " + fn + " already in track")
+		}
 	}
 
 	// read sd files and build logline list
@@ -50,7 +58,7 @@ func (m *manager) AddTrack(sdCardFolder string, files []string, trackfile string
 	tps.LogLines = append(tps.LogLines, lls...)
 	tps.LogLines = append(tps.LogLines, ll...)
 
-	fmt.Printf("lines:%d, track: %v", len(tps.LogLines), track)
+	m.log.Debugf("lines:%d, track: %v", len(tps.LogLines), track)
 	// update with new nmea file add source files to zip
 	return m.openNewZipCopyContent(sdCardFolder, files, trackfile, tps, *track)
 }
@@ -140,4 +148,20 @@ func (m *manager) copyOldFiles(trackfile string, zipWriter *zip.Writer) error {
 
 	r.Close()
 	return nil
+}
+
+func (m *manager) getFileList(trackfile string) []string {
+	r, err := zip.OpenReader(trackfile)
+	if err != nil {
+		return nil
+	}
+	defer r.Close()
+	files := make([]string, 0)
+	for _, f := range r.File {
+		if f.Name == trackutils.JSONFile || f.Name == trackutils.NMEAFile {
+			continue
+		}
+		files = append(files, f.Name)
+	}
+	return files
 }
