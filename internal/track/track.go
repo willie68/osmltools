@@ -62,6 +62,9 @@ func (m *manager) NewTrack(sdCardFolder string, files []string, trackfile string
 		LogLines: ll,
 	}
 	// Create the ZIP file
+	if err := os.MkdirAll(filepath.Dir(trackfile), os.ModePerm); err != nil {
+		return err
+	}
 	outFile, err := os.Create(trackfile)
 	if err != nil {
 		return err

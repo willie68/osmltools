@@ -149,7 +149,9 @@ func (c *Checker) AnalyseLoggerFile(fr *model.FileResult, lf string) ([]*model.L
 	if err != nil {
 		return nil, err
 	}
-	fr.Size = fs.Size()
+	if fr != nil {
+		fr.Size = fs.Size()
+	}
 	f, err := os.Open(lf)
 	if err != nil {
 		return nil, err
