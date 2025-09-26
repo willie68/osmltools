@@ -21,6 +21,7 @@ type FileResult struct {
 	Filename       string    `json:"filename"`
 	Origin         string    `json:"origin"`
 	Created        time.Time `json:"created"`
+	Size           int64     `json:"size"`
 	VesselID       int64     `json:"vesselID"`
 	DatagramCount  int       `json:"datagramCount"`
 	Version        string    `json:"version"`

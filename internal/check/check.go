@@ -145,6 +145,11 @@ func (c *Checker) GetVersion(ls []*model.LogLine) (string, error) {
 
 // AnalyseLoggerFile analyses a single logger file and returns the log lines found
 func (c *Checker) AnalyseLoggerFile(fr *model.FileResult, lf string) ([]*model.LogLine, error) {
+	fs, err := os.Stat(lf)
+	if err != nil {
+		return nil, err
+	}
+	fr.Size = fs.Size()
 	f, err := os.Open(lf)
 	if err != nil {
 		return nil, err
