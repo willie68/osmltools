@@ -208,7 +208,10 @@ func (c *LoggerConfig) backupCfg(sdCardFolder string) error {
 			return err
 		}
 	}
-	return os.Rename(newFile, oldFile)
+	if fileutils.FileExists(newFile) {
+		return os.Rename(newFile, oldFile)
+	}
+	return nil
 }
 
 func ConvertBaudToCode(baud int16) string {
