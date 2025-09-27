@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/willie68/gowillie68/pkg/fileutils"
 )
 
 type LoggerConfig struct {
@@ -162,6 +164,10 @@ func (c *LoggerConfig) Validate() error {
 
 func (c *LoggerConfig) WriteToSDCard(sdCardFolder string) error {
 	cfgFile := filepath.Join(sdCardFolder, "config.dat")
+	err := c.backupCfg(sdCardFolder)
+	if err != nil {
+		return err
+	}
 	f, err := os.Create(cfgFile)
 	if err != nil {
 		return err
@@ -191,6 +197,18 @@ func ReadFromSDCard(sdCardFolder string) (*LoggerConfig, error) {
 func (c *LoggerConfig) String() string {
 	return fmt.Sprintf("Seatalk: %t, BaudA: %d, BaudB: %d, Gyro: %t, Supply: %t, VesselID: %d",
 		c.Seatalk, c.BaudA, c.BaudB, c.Gyro, c.Supply, c.VesselID)
+}
+
+func (c *LoggerConfig) backupCfg(sdCardFolder string) error {
+	oldFile := filepath.Join(sdCardFolder, "config.old")
+	newFile := filepath.Join(sdCardFolder, "config.dat")
+	if fileutils.FileExists(oldFile) {
+		err := os.Remove(oldFile)
+		if err != nil {
+			return err
+		}
+	}
+	return os.Rename(newFile, oldFile)
 }
 
 func ConvertBaudToCode(baud int16) string {
