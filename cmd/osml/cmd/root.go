@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 	"github.com/willie68/osmltools/internal"
 	"github.com/willie68/osmltools/internal/logging"
@@ -51,4 +53,10 @@ func init() {
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	// rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+}
+
+func OutputWithJSONCheckf(frm string, args ...any) {
+	if !JSONOutput {
+		fmt.Printf(frm, args...)
+	}
 }

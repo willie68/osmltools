@@ -5,6 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/willie68/osmltools/internal/logger"
+	"github.com/willie68/osmltools/internal/sdformatter"
 )
 
 var loggerCmd = &cobra.Command{
@@ -58,6 +59,15 @@ var loggerWriteCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+		sdformat, _ := cmd.Flags().GetBool("sdformat")
+		if sdformat {
+			OutputWithJSONCheckf("formatting sd card at %s\n", sdCardFolder)
+			err = sdformatter.FormatFAT32(sdCardFolder)
+			if err != nil {
+				return err
+			}
+			OutputWithJSONCheckf("sd card at %s formatted\n", sdCardFolder)
+		}
 		err = cfg.WriteToSDCard(sdCardFolder)
 		if err != nil {
 			return err
@@ -70,8 +80,8 @@ var loggerWriteCmd = &cobra.Command{
 			fmt.Println(js)
 			return nil
 		}
-		fmt.Printf("configuration written to %s/config.dat\n", sdCardFolder)
-		fmt.Printf("config: %s\n", cfg.String())
+		OutputWithJSONCheckf("configuration written to %s/config.dat\n", sdCardFolder)
+		OutputWithJSONCheckf("config: %s\n", cfg.String())
 		return nil
 	},
 }
@@ -89,4 +99,5 @@ func init() {
 	loggerWriteCmd.Flags().Int16P("vesselid", "", 0, "id of the vessel to set or get the configuration")
 	loggerWriteCmd.Flags().BoolP("gyro", "", true, "write internal gyro data to the data files")
 	loggerWriteCmd.Flags().BoolP("supply", "", false, "write internal supply data to the data files")
+	loggerWriteCmd.Flags().BoolP("sdformat", "", false, "format the sd card before writing the configuration")
 }
