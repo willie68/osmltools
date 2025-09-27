@@ -5,11 +5,13 @@ package sdformatter
 import (
 	"fmt"
 	"os/exec"
+	"strings"
 )
 
 func formatFAT32(devicePath string) error {
 	// Format using the format command
 	// devicePath should be like "\\\\.\\E:"
+	devicePath = strings.TrimSuffix(devicePath, "\\")
 	cmd := exec.Command("cmd", "/C", "format", devicePath, "/FS:FAT32", "/Q", "/Y")
 	out, err := cmd.CombinedOutput()
 	if err != nil {

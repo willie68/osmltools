@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -59,4 +60,17 @@ func OutputWithJSONCheckf(frm string, args ...any) {
 	if !JSONOutput {
 		fmt.Printf(frm, args...)
 	}
+}
+
+func OutputAsJSON(arg any) {
+	js, err := json.Marshal(arg)
+	if err != nil {
+		OutputErrorJSON(err)
+		return
+	}
+	fmt.Println(string(js))
+}
+
+func OutputErrorJSON(err error) {
+	fmt.Printf("{\"error\": \"%v\"}", err)
 }

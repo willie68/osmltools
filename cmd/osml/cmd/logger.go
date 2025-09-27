@@ -68,6 +68,15 @@ var loggerWriteCmd = &cobra.Command{
 			}
 			OutputWithJSONCheckf("sd card at %s formatted\n", sdCardFolder)
 		}
+		sdlabel, _ := cmd.Flags().GetString("sdlabel")
+		if sdlabel != "" {
+			OutputWithJSONCheckf("setting the label of sd card to %s on %s\n", sdlabel, sdCardFolder)
+			err = sdformatter.SetLabel(sdCardFolder, sdlabel)
+			if err != nil {
+				return err
+			}
+			OutputWithJSONCheckf("label set to %s on %s\n", sdlabel, sdCardFolder)
+		}
 		err = cfg.WriteToSDCard(sdCardFolder)
 		if err != nil {
 			return err
@@ -99,5 +108,6 @@ func init() {
 	loggerWriteCmd.Flags().Int16P("vesselid", "", 0, "id of the vessel to set or get the configuration")
 	loggerWriteCmd.Flags().BoolP("gyro", "", true, "write internal gyro data to the data files")
 	loggerWriteCmd.Flags().BoolP("supply", "", false, "write internal supply data to the data files")
-	loggerWriteCmd.Flags().BoolP("sdformat", "", false, "format the sd card before writing the configuration")
+	loggerWriteCmd.Flags().Bool("sdformat", false, "format the sd card before writing the configuration")
+	loggerWriteCmd.Flags().String("sdlabel", "", "setting the label of the sd card")
 }
