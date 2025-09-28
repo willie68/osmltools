@@ -11,9 +11,11 @@ import (
 )
 
 var (
+	// Inj the injector used for the programm
 	Inj = do.New()
 )
 
+// Init initialise all needed services
 func Init() {
 	check.Init(Inj)
 	config.Init(Inj)

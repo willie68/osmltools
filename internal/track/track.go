@@ -155,9 +155,10 @@ func addFileToZip(zipWriter *zip.Writer, filename string) (*model.SourceData, er
 
 	n, err := io.Copy(wr, fileToZip)
 	sd := model.SourceData{
-		FileName: filename,
+		FileName: filepath.Base(filename),
 		Size:     n,
 		Hash:     fmt.Sprintf("sha256:%s", hex.EncodeToString(h.Sum(nil))),
+		Modified: info.ModTime(),
 	}
 
 	return &sd, err
