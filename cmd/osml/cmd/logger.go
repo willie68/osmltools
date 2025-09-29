@@ -46,18 +46,6 @@ var loggerWriteCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		sdformat, _ := cmd.Flags().GetBool("sdformat")
-		if sdformat {
-			if err := formatSDCard(); err != nil {
-				return err
-			}
-		}
-		sdlabel, _ := cmd.Flags().GetString("sdlabel")
-		if sdlabel != "" {
-			if err := labelSDCard(sdlabel); err != nil {
-				return err
-			}
-		}
 		if err := cfg.WriteToSDCard(sdCardFolder); err != nil {
 			return err
 		}
@@ -118,10 +106,8 @@ func init() {
 	loggerWriteCmd.Flags().Int16P("baudA", "a", 4800, "channel A communication baud rate")
 	loggerWriteCmd.Flags().Int16P("baudB", "b", 4800, "channel B communication baud rate")
 	loggerWriteCmd.Flags().Int16P("vesselid", "", 0, "id of the vessel to set or get the configuration")
-	loggerWriteCmd.Flags().BoolP("gyro", "", true, "write internal gyro data to the data files")
+	loggerWriteCmd.Flags().BoolP("gyro", "", false, "write internal gyro data to the data files")
 	loggerWriteCmd.Flags().BoolP("supply", "", false, "write internal supply data to the data files")
-	loggerWriteCmd.Flags().Bool("sdformat", false, "format the sd card before writing the configuration")
-	loggerWriteCmd.Flags().String("sdlabel", "", "setting the label of the sd card")
 
 	loggerCmd.AddCommand(loggerInitCmd)
 	loggerInitCmd.Flags().String("sdlabel", "", "setting the label of the sd card")
