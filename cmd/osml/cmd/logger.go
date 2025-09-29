@@ -42,43 +42,43 @@ var loggerWriteCmd = &cobra.Command{
 	Short: "write the osmlogger configuration",
 	Long:  `write the open sea map logger configuration`,
 	RunE: func(cmd *cobra.Command, _ []string) error {
-		seatalk, _ := cmd.Flags().GetBool("seatalk")
-		baudA, _ := cmd.Flags().GetInt16("baudA")
-		baudB, _ := cmd.Flags().GetInt16("baudB")
-		vesselID, _ := cmd.Flags().GetInt16("vesselid")
-		gyro, _ := cmd.Flags().GetBool("gyro")
-		supply, _ := cmd.Flags().GetBool("supply")
-		cfg := logger.NewLoggerConfig().
-			WithBaudA(baudA).
-			WithBaudB(baudB).
-			WithGyro(gyro).
-			WithSupply(supply).
-			WithSeatalk(seatalk).
-			WithVesselID(vesselID)
-		err := cfg.Validate()
+		cfg, err := createCFG(cmd)
 		if err != nil {
 			return err
 		}
-		sdformat, _ := cmd.Flags().GetBool("sdformat")
-		if sdformat {
-			OutputWithJSONCheckf("formatting sd card at %s\n", sdCardFolder)
-			err = sdformatter.FormatFAT32(sdCardFolder)
+		if err := cfg.WriteToSDCard(sdCardFolder); err != nil {
+			return err
+		}
+		if JSONOutput {
+			js, err := cfg.JSON()
 			if err != nil {
 				return err
 			}
-			OutputWithJSONCheckf("sd card at %s formatted\n", sdCardFolder)
+			fmt.Println(js)
+			return nil
+		}
+		OutputWithJSONCheckf("configuration written to %s/config.dat\n", sdCardFolder)
+		OutputWithJSONCheckf("config: %s\n", cfg.String())
+		return nil
+	},
+}
+
+var loggerInitCmd = &cobra.Command{
+	Use:   "init",
+	Short: "init a new sd card",
+	Long:  `initialise a new sd card for usage with the depth logger`,
+	RunE: func(cmd *cobra.Command, _ []string) error {
+		cfg := logger.NewLoggerConfig()
+		if err := formatSDCard(); err != nil {
+			return err
 		}
 		sdlabel, _ := cmd.Flags().GetString("sdlabel")
 		if sdlabel != "" {
-			OutputWithJSONCheckf("setting the label of sd card to %s on %s\n", sdlabel, sdCardFolder)
-			err = sdformatter.SetLabel(sdCardFolder, sdlabel)
-			if err != nil {
+			if err := labelSDCard(sdlabel); err != nil {
 				return err
 			}
-			OutputWithJSONCheckf("label set to %s on %s\n", sdlabel, sdCardFolder)
 		}
-		err = cfg.WriteToSDCard(sdCardFolder)
-		if err != nil {
+		if err := cfg.WriteToSDCard(sdCardFolder); err != nil {
 			return err
 		}
 		if JSONOutput {
@@ -106,8 +106,50 @@ func init() {
 	loggerWriteCmd.Flags().Int16P("baudA", "a", 4800, "channel A communication baud rate")
 	loggerWriteCmd.Flags().Int16P("baudB", "b", 4800, "channel B communication baud rate")
 	loggerWriteCmd.Flags().Int16P("vesselid", "", 0, "id of the vessel to set or get the configuration")
-	loggerWriteCmd.Flags().BoolP("gyro", "", true, "write internal gyro data to the data files")
+	loggerWriteCmd.Flags().BoolP("gyro", "", false, "write internal gyro data to the data files")
 	loggerWriteCmd.Flags().BoolP("supply", "", false, "write internal supply data to the data files")
-	loggerWriteCmd.Flags().Bool("sdformat", false, "format the sd card before writing the configuration")
-	loggerWriteCmd.Flags().String("sdlabel", "", "setting the label of the sd card")
+
+	loggerCmd.AddCommand(loggerInitCmd)
+	loggerInitCmd.Flags().String("sdlabel", "", "setting the label of the sd card")
+}
+
+func createCFG(cmd *cobra.Command) (*logger.LoggerConfig, error) {
+	seatalk, _ := cmd.Flags().GetBool("seatalk")
+	baudA, _ := cmd.Flags().GetInt16("baudA")
+	baudB, _ := cmd.Flags().GetInt16("baudB")
+	vesselID, _ := cmd.Flags().GetInt16("vesselid")
+	gyro, _ := cmd.Flags().GetBool("gyro")
+	supply, _ := cmd.Flags().GetBool("supply")
+	cfg := logger.NewLoggerConfig().
+		WithBaudA(baudA).
+		WithBaudB(baudB).
+		WithGyro(gyro).
+		WithSupply(supply).
+		WithSeatalk(seatalk).
+		WithVesselID(vesselID)
+	err := cfg.Validate()
+	if err != nil {
+		return nil, err
+	}
+	return cfg, nil
+}
+
+func formatSDCard() error {
+	OutputWithJSONCheckf("formatting sd card at %s\n", sdCardFolder)
+	err := sdformatter.FormatFAT32(sdCardFolder)
+	if err != nil {
+		return err
+	}
+	OutputWithJSONCheckf("sd card at %s formatted\n", sdCardFolder)
+	return nil
+}
+
+func labelSDCard(sdlabel string) error {
+	OutputWithJSONCheckf("setting the label of sd card to %s on %s\n", sdlabel, sdCardFolder)
+	err := sdformatter.SetLabel(sdCardFolder, sdlabel)
+	if err != nil {
+		return err
+	}
+	OutputWithJSONCheckf("label set to %s on %s\n", sdlabel, sdCardFolder)
+	return nil
 }
