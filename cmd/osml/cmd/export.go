@@ -14,6 +14,11 @@ import (
 	"github.com/willie68/osmltools/internal/model"
 )
 
+type exporter interface {
+	Export(sdCardFolder, outputFolder string, files []string, format, name string) error
+	ExportTrack(trackfile, outputfile, format string) error
+}
+
 // checkCmd represents the generate command
 var exportCmd = &cobra.Command{
 	Use:   "export",
@@ -49,7 +54,7 @@ func init() {
 
 // Export get the exporter and execute it on the sd file set
 func Export(sdCardFolder, outputFolder string, files []string, format, name string) error {
-	exp := do.MustInvoke[export.Exporter](internal.Inj)
+	exp := do.MustInvokeAs[exporter](internal.Inj)
 	td := time.Now()
 	err := exp.Export(sdCardFolder, outputFolder, files, format, name)
 	logging.Root.Infof("exporting files took %d seconds", time.Since(td).Abs().Milliseconds()/1000)
@@ -65,7 +70,7 @@ func Export(sdCardFolder, outputFolder string, files []string, format, name stri
 
 // ExportTrack a single track file into the given format
 func ExportTrack(trackfile, outputFile, format string) error {
-	exp := do.MustInvoke[export.Exporter](internal.Inj)
+	exp := do.MustInvokeAs[exporter](internal.Inj)
 	td := time.Now()
 	err := exp.ExportTrack(trackfile, outputFile, format)
 	logging.Root.Infof("exporting track took %d seconds", time.Since(td).Abs().Milliseconds()/1000)

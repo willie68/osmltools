@@ -14,36 +14,28 @@ import (
 	"time"
 
 	"github.com/samber/do/v2"
-	"github.com/willie68/osmltools/internal/check"
-	"github.com/willie68/osmltools/internal/export"
 	"github.com/willie68/osmltools/internal/export/nmeaexporter"
 	"github.com/willie68/osmltools/internal/logging"
 	"github.com/willie68/osmltools/internal/model"
 	"github.com/willie68/osmltools/internal/trackutils"
 )
 
-// Manager the track manager interface
-type Manager interface {
-	NewTrack(sdCardFolder string, files []string, trackfile string, track model.Track) error
-	AddTrack(sdCardFolder string, files []string, trackfile string) error
-	ListTrack(trackfile string) (*model.Track, error)
+type checkerSrv interface {
+	AnalyseLoggerFile(fr *model.FileResult, lf string) ([]*model.LogLine, error)
+	CorrectTimeStamp(ls []*model.LogLine) ([]*model.LogLine, bool, error)
 }
 
 // Manager the track manager service
 type manager struct {
 	log *logging.Logger
-	chk check.Checker
-	exp export.Exporter
+	chk checkerSrv
 }
-
-var _ Manager = &manager{}
 
 // Init init this service and provide it to di
 func Init(inj do.Injector) {
 	trm := manager{
 		log: logging.New().WithName("Trackmanager"),
-		chk: do.MustInvoke[check.Checker](inj),
-		exp: do.MustInvoke[export.Exporter](inj),
+		chk: do.MustInvokeAs[checkerSrv](inj),
 	}
 	do.ProvideValue(inj, &trm)
 }

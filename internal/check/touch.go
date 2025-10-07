@@ -14,7 +14,7 @@ import (
 	"github.com/willie68/osmltools/internal/osml"
 )
 
-func (c *Checker) Touch(sdCardFolder string, files []string) (*model.GeneralResult, error) {
+func (c *checker) Touch(sdCardFolder string, files []string) (*model.GeneralResult, error) {
 	fs, err := os.Stat(sdCardFolder)
 	if err != nil {
 		return nil, err
@@ -61,7 +61,7 @@ func (c *Checker) Touch(sdCardFolder string, files []string) (*model.GeneralResu
 	return gr, nil
 }
 
-func (c *Checker) getFirstTimestamp(file string) (time.Time, error) {
+func (c *checker) getFirstTimestamp(file string) (time.Time, error) {
 	f, err := os.Open(file)
 	if err != nil {
 		return time.Unix(0, 0), err

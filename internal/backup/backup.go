@@ -13,20 +13,20 @@ import (
 )
 
 // Backup the sd card backup service
-type Backup struct {
+type backup struct {
 	log logging.Logger
 }
 
 // Init init this service and provide it to di
 func Init(inj do.Injector) {
-	bck := Backup{
+	bck := backup{
 		log: *logging.New().WithName("Backup"),
 	}
-	do.ProvideValue(inj, bck)
+	do.ProvideValue(inj, &bck)
 }
 
 // Backup backup all files from the sd card into a zip file
-func (b *Backup) Backup(sdCardFolder, outputFolder string) (string, error) {
+func (b *backup) Backup(sdCardFolder, outputFolder string) (string, error) {
 	sdCardFolder, err := filepath.Abs(sdCardFolder)
 	if err != nil {
 		return "", err

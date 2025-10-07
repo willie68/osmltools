@@ -4,12 +4,9 @@ import (
 	"encoding/json"
 	"io"
 
-	"github.com/willie68/osmltools/internal/interfaces"
 	"github.com/willie68/osmltools/internal/logging"
 	"github.com/willie68/osmltools/internal/model"
 )
-
-var _ interfaces.FormatExporter = &JSONExporter{}
 
 type JSONExporter struct {
 	log        logging.Logger

@@ -5,12 +5,9 @@ import (
 	"io"
 
 	"github.com/twpayne/go-kml/v3"
-	"github.com/willie68/osmltools/internal/interfaces"
 	"github.com/willie68/osmltools/internal/logging"
 	"github.com/willie68/osmltools/internal/model"
 )
-
-var _ interfaces.FormatExporter = &KMLExporter{}
 
 type KMLExporter struct {
 	log        logging.Logger

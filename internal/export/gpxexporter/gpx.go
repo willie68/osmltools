@@ -6,12 +6,9 @@ import (
 	"io"
 
 	"github.com/twpayne/go-gpx"
-	"github.com/willie68/osmltools/internal/interfaces"
 	"github.com/willie68/osmltools/internal/logging"
 	"github.com/willie68/osmltools/internal/model"
 )
-
-var _ interfaces.FormatExporter = &GPXExporter{}
 
 type GPXExporter struct {
 	log logging.Logger

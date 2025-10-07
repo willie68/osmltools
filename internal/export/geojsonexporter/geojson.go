@@ -5,12 +5,9 @@ import (
 
 	"github.com/twpayne/go-geom"
 	"github.com/twpayne/go-geom/encoding/geojson"
-	"github.com/willie68/osmltools/internal/interfaces"
 	"github.com/willie68/osmltools/internal/logging"
 	"github.com/willie68/osmltools/internal/model"
 )
-
-var _ interfaces.FormatExporter = &GeoJSONExporter{}
 
 type GeoJSONExporter struct {
 	log logging.Logger

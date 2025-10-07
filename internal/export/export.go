@@ -3,6 +3,7 @@ package export
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"sort"
@@ -11,13 +12,11 @@ import (
 
 	"github.com/samber/do/v2"
 	"github.com/willie68/gowillie68/pkg/fileutils"
-	"github.com/willie68/osmltools/internal/check"
 	"github.com/willie68/osmltools/internal/export/geojsonexporter"
 	"github.com/willie68/osmltools/internal/export/gpxexporter"
 	"github.com/willie68/osmltools/internal/export/jsonexporter"
 	"github.com/willie68/osmltools/internal/export/kmlexporter"
 	"github.com/willie68/osmltools/internal/export/nmeaexporter"
-	"github.com/willie68/osmltools/internal/interfaces"
 	"github.com/willie68/osmltools/internal/logging"
 	"github.com/willie68/osmltools/internal/model"
 	"github.com/willie68/osmltools/internal/osml"
@@ -40,10 +39,19 @@ var (
 	SupportedFormats = []string{JSONFormat, NMEAFormat, GPXFormat, KMLFormat, KMZFormat, GEOJSONFormat}
 )
 
-type Exporter struct {
+type formatExporter interface {
+	ExportTrack(track model.TrackPoints, output io.Writer) error
+}
+
+type checkerSrv interface {
+	AnalyseLoggerFile(fr *model.FileResult, lf string) ([]*model.LogLine, error)
+	CorrectTimeStamp(ls []*model.LogLine) ([]*model.LogLine, bool, error)
+}
+
+type exporter struct {
 	log    logging.Logger
-	chk    check.Checker
-	exp    interfaces.FormatExporter
+	chk    checkerSrv
+	exp    formatExporter
 	tracks map[string]trackFileData
 }
 
@@ -53,16 +61,16 @@ type trackFileData struct {
 }
 
 func Init(inj do.Injector) {
-	exp := Exporter{
+	exp := exporter{
 		log:    *logging.New().WithName("Exporter"),
-		chk:    do.MustInvoke[check.Checker](inj),
+		chk:    do.MustInvokeAs[checkerSrv](inj),
 		tracks: make(map[string]trackFileData),
 	}
-	do.ProvideValue(inj, exp)
+	do.ProvideValue(inj, &exp)
 }
 
 // Export get the exporter and execute it on the sd file set
-func (e *Exporter) Export(sdCardFolder, outputFolder string, files []string, format, name string) error {
+func (e *exporter) Export(sdCardFolder, outputFolder string, files []string, format, name string) error {
 	outTempl := filepath.Join(outputFolder, fmt.Sprintf("track_%%04d.%s", strings.ToLower(format)))
 	e.log.Infof("exporter called: sd %s, out: %s, format: %s", sdCardFolder, outTempl, format)
 
@@ -115,7 +123,7 @@ func (e *Exporter) Export(sdCardFolder, outputFolder string, files []string, for
 }
 
 // Export get the exporter and execute it on the sd file set
-func (e *Exporter) ExportTrack(trackfile, outputfile, format string) error {
+func (e *exporter) ExportTrack(trackfile, outputfile, format string) error {
 	e.log.Infof("track exporter called: track %s, out: %s, format: %s", trackfile, outputfile, format)
 
 	exp, err := e.checkExporter(format)
@@ -155,7 +163,7 @@ func (e *Exporter) ExportTrack(trackfile, outputfile, format string) error {
 	return err
 }
 
-func ReadLogFiles(files []string, sdCardFolder string, e *Exporter, outTempl string, name string) ([]*model.LogLine, int, []string, error) {
+func ReadLogFiles(files []string, sdCardFolder string, e *exporter, outTempl string, name string) ([]*model.LogLine, int, []string, error) {
 	ls := make([]*model.LogLine, 0)
 	count := 0
 	today := time.Time{}
@@ -196,7 +204,7 @@ func ReadLogFiles(files []string, sdCardFolder string, e *Exporter, outTempl str
 	return ls, count, processedFiles, nil
 }
 
-func (e *Exporter) exportFile(ls []*model.LogLine, count int, outTempl, name string, filelist []string) error {
+func (e *exporter) exportFile(ls []*model.LogLine, count int, outTempl, name string, filelist []string) error {
 	if len(ls) == 0 {
 		return nil
 	}
@@ -228,7 +236,7 @@ func (e *Exporter) exportFile(ls []*model.LogLine, count int, outTempl, name str
 	return e.exp.ExportTrack(*tr, fs)
 }
 
-func (e *Exporter) exportTrackFile(ls []*model.LogLine, name, outputfile string) error {
+func (e *exporter) exportTrackFile(ls []*model.LogLine, name, outputfile string) error {
 	if len(ls) == 0 {
 		return nil
 	}
@@ -255,7 +263,7 @@ func (e *Exporter) exportTrackFile(ls []*model.LogLine, name, outputfile string)
 	return e.exp.ExportTrack(*tr, fs)
 }
 
-func (e *Exporter) checkExporter(format string) (interfaces.FormatExporter, error) {
+func (e *exporter) checkExporter(format string) (formatExporter, error) {
 	switch format {
 	case JSONFormat:
 		return jsonexporter.New(), nil

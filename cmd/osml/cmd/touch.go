@@ -7,9 +7,13 @@ import (
 	"github.com/samber/do/v2"
 	"github.com/spf13/cobra"
 	"github.com/willie68/osmltools/internal"
-	"github.com/willie68/osmltools/internal/check"
 	"github.com/willie68/osmltools/internal/logging"
+	"github.com/willie68/osmltools/internal/model"
 )
+
+type touchSrv interface {
+	Touch(sdCardFolder string, files []string) (*model.GeneralResult, error)
+}
 
 // touchCmd touches data files with the right file date
 var touchCmd = &cobra.Command{
@@ -30,7 +34,7 @@ func init() {
 
 // Touch get the checker and execute touch on the sd file set
 func Touch(sdCardFolder string, files []string) error {
-	chk := do.MustInvoke[check.Checker](internal.Inj)
+	chk := do.MustInvokeAs[touchSrv](internal.Inj)
 	td := time.Now()
 	res, err := chk.Touch(sdCardFolder, files)
 	logging.Root.Infof("touching files took %d seconds", time.Since(td).Abs().Milliseconds()/1000)

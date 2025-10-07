@@ -8,26 +8,30 @@ import (
 	"strings"
 
 	"github.com/samber/do/v2"
-	"github.com/willie68/osmltools/internal/check"
 	"github.com/willie68/osmltools/internal/logging"
 	"github.com/willie68/osmltools/internal/model"
 	"github.com/willie68/osmltools/internal/trackutils"
 )
 
-type Converter struct {
+type checkerSrv interface {
+	AnalyseLoggerFile(fr *model.FileResult, lf string) ([]*model.LogLine, error)
+	CorrectTimeStamp(ls []*model.LogLine) ([]*model.LogLine, bool, error)
+}
+
+type converter struct {
 	log logging.Logger
-	chk check.Checker
+	chk checkerSrv
 }
 
 func Init(inj do.Injector) {
-	exp := Converter{
+	exp := converter{
 		log: *logging.New().WithName("Converter"),
-		chk: do.MustInvoke[check.Checker](inj),
+		chk: do.MustInvokeAs[checkerSrv](inj),
 	}
-	do.ProvideValue(inj, exp)
+	do.ProvideValue(inj, &exp)
 }
 
-func (c *Converter) Convert(sdCardFolder string, files []string, track string) (tps *model.TrackPoints, err error) {
+func (c *converter) Convert(sdCardFolder string, files []string, track string) (tps *model.TrackPoints, err error) {
 	if track != "" {
 		tps, err = c.TrackPoints(track)
 		if err != nil {
@@ -42,14 +46,14 @@ func (c *Converter) Convert(sdCardFolder string, files []string, track string) (
 	return tps, nil
 }
 
-func (c *Converter) TrackPoints(trackfile string) (*model.TrackPoints, error) {
+func (c *converter) TrackPoints(trackfile string) (*model.TrackPoints, error) {
 	if model.IsOldTrackVersion(trackfile) {
 		return c.OldTrackPoints(trackfile)
 	}
 	return c.NewTrackPoints(trackfile)
 }
 
-func (c *Converter) NewTrackPoints(trackfile string) (*model.TrackPoints, error) {
+func (c *converter) NewTrackPoints(trackfile string) (*model.TrackPoints, error) {
 	track, nmealines, err := trackutils.ReadTrackAndNmea(trackfile)
 
 	lls, err := model.ParseLines2LogLines(nmealines, false)
@@ -70,7 +74,7 @@ func (c *Converter) NewTrackPoints(trackfile string) (*model.TrackPoints, error)
 	return tps, nil
 }
 
-func (c *Converter) OldTrackPoints(trackfile string) (*model.TrackPoints, error) {
+func (c *converter) OldTrackPoints(trackfile string) (*model.TrackPoints, error) {
 	track, nmealines, err := trackutils.ReadOldTrackAndNmea(trackfile)
 
 	if err != nil {
@@ -101,7 +105,7 @@ func (c *Converter) OldTrackPoints(trackfile string) (*model.TrackPoints, error)
 	return tps, nil
 }
 
-func (c *Converter) convertData(sdCardFolder string, files []string) (*model.TrackPoints, error) {
+func (c *converter) convertData(sdCardFolder string, files []string) (*model.TrackPoints, error) {
 	fs, err := os.Stat(sdCardFolder)
 	if err != nil {
 		return nil, err
