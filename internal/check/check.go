@@ -32,11 +32,14 @@ type checker struct {
 	log   logging.Logger
 }
 
-func Init(inj do.Injector) {
-	chk := checker{
+func provide(inj do.Injector) (*checker, error) {
+	return &checker{
 		log: *logging.New().WithName("Checker"),
-	}
-	do.ProvideValue(inj, &chk)
+	}, nil
+}
+
+func Init(inj do.Injector) {
+	do.Provide(inj, provide)
 }
 
 // Check checks the sd card folder and writes the cleaned up NMEA files to the output folder
@@ -44,7 +47,7 @@ func (c *checker) Check(sdCardFolder, outputFolder string, overwrite, report boo
 	c.log.Infof("check called: sd %s, out: %s", sdCardFolder, outputFolder)
 	fs, err := os.Stat(sdCardFolder)
 	if err != nil {
-		return nil, err
+		return nil, osml.ErrWrongCardFolder
 	}
 	result := model.NewCheckResult()
 	c.files = make([]string, 0)
@@ -117,7 +120,7 @@ func (c *checker) checkFile(loggerfile string, result *model.CheckResult, output
 	}
 	if outputFolder != "" {
 		err = c.outputToFolder(fr, loggerfile, outputFolder, ls, overwrite)
-		if err == nil {
+		if err != nil {
 			return err
 		}
 	}
@@ -159,6 +162,8 @@ func (c *checker) AnalyseLoggerFile(fr *model.FileResult, lf string) ([]*model.L
 	scanner := bufio.NewScanner(f)
 	ls := make([]*model.LogLine, 0)
 	count := 0
+	erTags := 0
+	unTags := 0
 	// Loop through the file and read each line
 	for scanner.Scan() {
 		count++
@@ -166,12 +171,12 @@ func (c *checker) AnalyseLoggerFile(fr *model.FileResult, lf string) ([]*model.L
 		ll, ok, err := model.ParseLogLine(line)
 		if err != nil {
 			if ok {
-				fr.UnknownTags++
+				unTags++
 				ls := fmt.Sprintf("warning unknown NMEA Tag in line %d: %s", count, line)
 				c.log.Debug(ls)
 				model.AddWarning(fr, ls)
 			} else {
-				fr.ErrorTags++
+				erTags++
 				ls := fmt.Sprintf("error in line %d: %s: %v", count, line, err)
 				c.log.Debug(ls)
 				ch := "I"
@@ -187,6 +192,8 @@ func (c *checker) AnalyseLoggerFile(fr *model.FileResult, lf string) ([]*model.L
 	}
 	if fr != nil {
 		fr.DatagramCount = count
+		fr.ErrorTags += erTags
+		fr.UnknownTags += unTags
 	}
 	// Check for errors during the scan
 	if err := scanner.Err(); err != nil {

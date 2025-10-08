@@ -139,10 +139,15 @@ func init() {
 
 	sp.CustomParsers["OSMVCC"] = func(s nmea.BaseSentence) (nmea.Sentence, error) {
 		p := nmea.NewParser(s)
+		v := p.Int64(0, "voltage")
+		nv := int64(0)
+		if len(p.Fields) > 1 {
+			nv = p.Int64(1, "normvoltage")
+		}
 		return OSMVCC{
 			BaseSentence: s,
-			Voltage:      p.Int64(0, "voltage"),
-			NormVoltage:  p.Int64(1, "normvoltage"),
+			Voltage:      v,
+			NormVoltage:  nv,
 		}, p.Err()
 	}
 

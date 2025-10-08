@@ -48,12 +48,17 @@ func (s *BackupTestSuite) TestRestore() {
 	s.Equal(testZIP, filename)
 }
 
-func (s *BackupTestSuite) TestRestore1() {
-	err := os.MkdirAll("../../testdata/rst", os.ModePerm)
-	s.NoError(err)
-	zip := "../../testdata/bck/bck_20250913160205.zip"
+func (s *BackupTestSuite) TestRestoreSDNotExists() {
+	filename, err := s.bck.Restore(testZIP, "../../testdata/rst2")
+	s.Error(err)
+	s.Equal("", filename)
+}
 
-	filename, err := s.bck.Restore(zip, "../../testdata/rst1")
+func (s *BackupTestSuite) TestRestoreSDisFile() {
+	err := os.WriteFile("../../testdata/rst1", []byte("empty"), os.ModePerm)
 	s.NoError(err)
-	s.Equal(zip, filename)
+
+	filename, err := s.bck.Restore(testZIP, "../../testdata/rst1")
+	s.Error(err)
+	s.Equal("", filename)
 }

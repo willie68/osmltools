@@ -31,13 +31,16 @@ type manager struct {
 	chk checkerSrv
 }
 
-// Init init this service and provide it to di
-func Init(inj do.Injector) {
-	trm := manager{
+func provide(inj do.Injector) (*manager, error) {
+	return &manager{
 		log: logging.New().WithName("Trackmanager"),
 		chk: do.MustInvokeAs[checkerSrv](inj),
-	}
-	do.ProvideValue(inj, &trm)
+	}, nil
+}
+
+// Init init this service and provide it to di
+func Init(inj do.Injector) {
+	do.Provide(inj, provide)
 }
 
 func (m *manager) NewTrack(sdCardFolder string, files []string, trackfile string, track model.Track) error {

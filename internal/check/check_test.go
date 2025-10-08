@@ -49,12 +49,12 @@ func (s *CheckSuite) TestCheckBasicCheck() {
 	)
 	s.ast.NoError(err)
 	s.ast.Equal(8147, res.ErrorTags)
-	s.ast.Equal(16281, res.UnknownTags)
-	s.ast.True(fileutils.FileExists(filepath.Join(of, "597-DATA001231-2016-09-11.nmea")))
-	s.ast.True(fileutils.FileExists(filepath.Join(of, "597-DATA001232-2016-09-11.nmea")))
-	s.ast.True(fileutils.FileExists(filepath.Join(of, "597-DATA001233-2016-09-11.nmea")))
-	s.ast.True(fileutils.FileExists(filepath.Join(of, "597-DATA001234-2016-09-11.nmea")))
-	s.ast.True(fileutils.FileExists(filepath.Join(of, "597-DATA001235-2016-09-11.nmea")))
+	s.ast.Equal(0, res.UnknownTags)
+	s.ast.True(fileutils.FileExists(filepath.Join(of, "65535-DATA001231-2016-09-11.nmea")))
+	s.ast.True(fileutils.FileExists(filepath.Join(of, "65535-DATA001232-2016-09-11.nmea")))
+	s.ast.True(fileutils.FileExists(filepath.Join(of, "65535-DATA001233-2016-09-11.nmea")))
+	s.ast.True(fileutils.FileExists(filepath.Join(of, "65535-DATA001234-2016-09-11.nmea")))
+	s.ast.True(fileutils.FileExists(filepath.Join(of, "65535-DATA001235-2016-09-11.nmea")))
 	s.ast.True(fileutils.FileExists(filepath.Join(of, "report.json")))
 }
 

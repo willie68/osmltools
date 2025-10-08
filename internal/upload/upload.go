@@ -14,12 +14,15 @@ const (
 	osmlService = "osml-upload"
 )
 
+func provide(inj do.Injector) (*manager, error) {
+	return &manager{
+		log: logging.New().WithName("Upload"),
+	}, nil
+}
+
 // Init init this service and provide it to di
 func Init(inj do.Injector) {
-	trm := manager{
-		log: logging.New().WithName("Upload"),
-	}
-	do.ProvideValue(inj, &trm)
+	do.Provide(inj, provide)
 }
 
 func (m *manager) StoreCredentials(user, password string) error {

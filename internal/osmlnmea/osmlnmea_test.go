@@ -7,13 +7,11 @@ import (
 	"time"
 
 	"github.com/adrianmo/go-nmea"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )
 
 type OsmlnmeaSuite struct {
 	suite.Suite
-	ast *assert.Assertions
 }
 
 func TestCheckSuite(t *testing.T) {
@@ -21,7 +19,6 @@ func TestCheckSuite(t *testing.T) {
 }
 
 func (s *OsmlnmeaSuite) SetupTest() {
-	s.ast = assert.New(s.T())
 }
 
 func TestDateTime(t *testing.T) {
@@ -31,28 +28,34 @@ func TestDateTime(t *testing.T) {
 }
 
 func (s *OsmlnmeaSuite) TestRegistrationCheck() {
-	s.ast.NotNil(sp)
+	s.NotNil(sp)
 
-	s.ast.Equal(5, len(sp.CustomParsers))
+	s.Equal(8, len(sp.CustomParsers))
 
 	_, ok := sp.CustomParsers["OSMST"]
-	s.ast.True(ok)
+	s.True(ok)
 	_, ok = sp.CustomParsers["OSMSO"]
-	s.ast.True(ok)
+	s.True(ok)
 	_, ok = sp.CustomParsers["OSMCFG"]
-	s.ast.True(ok)
+	s.True(ok)
 	_, ok = sp.CustomParsers["OSMGYR"]
-	s.ast.True(ok)
+	s.True(ok)
 	_, ok = sp.CustomParsers["OSMACC"]
-	s.ast.True(ok)
+	s.True(ok)
+	_, ok = sp.CustomParsers["OSMVCC"]
+	s.True(ok)
+	_, ok = sp.CustomParsers["GRMM"]
+	s.True(ok)
+	_, ok = sp.CustomParsers["GRMZ"]
+	s.True(ok)
 }
 
 func (s *OsmlnmeaSuite) TestNMEASentenceBasic() {
 	line := "$GPGGA,101313,4721.182,N,00832.161,E,1,03,2.3,269.3,M,48.0,M,,*47"
 	sen, err := ParseNMEA(line)
-	s.ast.NoError(err)
+	s.NoError(err)
 	_, ok := sen.(nmea.GGA)
-	s.ast.True(ok)
+	s.True(ok)
 }
 
 func (s *OsmlnmeaSuite) TestOSMLSentence() {
@@ -64,16 +67,39 @@ func (s *OsmlnmeaSuite) TestOSMLSentence() {
 		{line: "$POSMCFG,255,255,255,255,ffff,65535*73", nmeatype: OSMCFG{}},
 		{line: "$POSMGYR,-340,-107,-78*42", nmeatype: OSMGYR{}},
 		{line: "$POSMACC,168,10428,13928*5D", nmeatype: OSMACC{}},
+		{line: "$POSMVCC,4940*72", nmeatype: OSMVCC{}},
 		{line: "$POSMSO,Reason: times up*4C", nmeatype: OSMSO{}},
 	}
 
 	for _, tt := range myTests {
 		sen, err := ParseNMEA(tt.line)
 
-		s.ast.NoError(err)
-		s.ast.IsType(tt.nmeatype, sen)
-		s.ast.Truef(IsNMEASentence(tt.line), "IsNMEASentence: %s", tt.line)
+		s.NoError(err)
+		s.IsType(tt.nmeatype, sen)
+		s.Truef(IsNMEASentence(tt.line), "IsNMEASentence: %s", tt.line)
 	}
+}
+
+func (s *OsmlnmeaSuite) TestVCCSentence1Param() {
+	posvcc := "$POSMVCC,4940*72"
+	sen, err := ParseNMEA(posvcc)
+
+	s.NoError(err)
+	s.IsType(OSMVCC{}, sen)
+	vcc := sen.(OSMVCC)
+	s.Equal(int64(4940), vcc.Voltage)
+	s.Equal(int64(0), vcc.NormVoltage)
+}
+
+func (s *OsmlnmeaSuite) TestVCCSentence2Param() {
+	posvcc := "$POSMVCC,5073,4873*5E"
+	sen, err := ParseNMEA(posvcc)
+
+	s.NoError(err)
+	s.IsType(OSMVCC{}, sen)
+	vcc := sen.(OSMVCC)
+	s.Equal(int64(5073), vcc.Voltage)
+	s.Equal(int64(4873), vcc.NormVoltage)
 }
 
 func (s *OsmlnmeaSuite) TestUnknownNMEA() {
@@ -81,18 +107,18 @@ func (s *OsmlnmeaSuite) TestUnknownNMEA() {
 		line     string
 		nmeatype any
 	}{
-		{line: "$PGRMM,WGS 84*06", nmeatype: &nmea.BaseSentence{}},
+		{line: "$PGRMN,WGS 84*05", nmeatype: &nmea.BaseSentence{}},
 		{line: "$GPRTE,1,1,c,0*07", nmeatype: &nmea.BaseSentence{}},
 	}
 
 	for _, tt := range myTests {
 		sen, err := ParseNMEA(tt.line)
 
-		s.ast.NotNil(sen)
-		s.ast.Error(err)
-		s.ast.IsType(tt.nmeatype, sen)
+		s.NotNil(sen)
+		s.Error(err)
+		s.IsType(tt.nmeatype, sen)
 
-		s.ast.True(IsNMEASentence(tt.line))
+		s.True(IsNMEASentence(tt.line))
 	}
 }
 
@@ -107,9 +133,9 @@ func (s *OsmlnmeaSuite) TestErrorline() {
 	for _, tt := range myTests {
 		sen, err := ParseNMEA(tt.line)
 
-		s.ast.Nil(sen)
-		s.ast.Error(err)
+		s.Nil(sen)
+		s.Error(err)
 
-		s.ast.False(IsNMEASentence(tt.line))
+		s.False(IsNMEASentence(tt.line))
 	}
 }

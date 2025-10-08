@@ -23,12 +23,15 @@ type converter struct {
 	chk checkerSrv
 }
 
-func Init(inj do.Injector) {
-	exp := converter{
+func provide(inj do.Injector) (*converter, error) {
+	return &converter{
 		log: *logging.New().WithName("Converter"),
 		chk: do.MustInvokeAs[checkerSrv](inj),
-	}
-	do.ProvideValue(inj, &exp)
+	}, nil
+}
+
+func Init(inj do.Injector) {
+	do.Provide(inj, provide)
 }
 
 func (c *converter) Convert(sdCardFolder string, files []string, track string) (tps *model.TrackPoints, err error) {
