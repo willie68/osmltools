@@ -32,14 +32,12 @@ type checker struct {
 	log   logging.Logger
 }
 
-func provide(inj do.Injector) (*checker, error) {
-	return &checker{
-		log: *logging.New().WithName("Checker"),
-	}, nil
-}
-
 func Init(inj do.Injector) {
-	do.Provide(inj, provide)
+	do.Provide(inj, func(_ do.Injector) (*checker, error) {
+		return &checker{
+			log: *logging.New().WithName("Checker"),
+		}, nil
+	})
 }
 
 // Check checks the sd card folder and writes the cleaned up NMEA files to the output folder

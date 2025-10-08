@@ -19,12 +19,10 @@ type Version struct {
 	date    string
 }
 
-func provide(inj do.Injector) (*Version, error) {
-	return NewVersion(), nil
-}
-
 func Init(inj do.Injector) {
-	do.Provide(inj, provide)
+	do.Provide(inj, func(_ do.Injector) (*Version, error) {
+		return NewVersion(), nil
+	})
 }
 
 // NewVersion creating a new version

@@ -17,15 +17,13 @@ type backup struct {
 	log logging.Logger
 }
 
-func provide(inj do.Injector) (*backup, error) {
-	return &backup{
-		log: *logging.New().WithName("Backup"),
-	}, nil
-}
-
 // Init init this service and provide it to di
 func Init(inj do.Injector) {
-	do.Provide(inj, provide)
+	do.Provide(inj, func(_ do.Injector) (*backup, error) {
+		return &backup{
+			log: *logging.New().WithName("Backup"),
+		}, nil
+	})
 }
 
 // Backup backup all files from the sd card into a zip file

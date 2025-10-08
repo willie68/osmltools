@@ -60,16 +60,14 @@ type trackFileData struct {
 	Files []string
 }
 
-func provide(inj do.Injector) (*exporter, error) {
-	return &exporter{
-		log:    *logging.New().WithName("Exporter"),
-		chk:    do.MustInvokeAs[checkerSrv](inj),
-		tracks: make(map[string]trackFileData),
-	}, nil
-}
-
 func Init(inj do.Injector) {
-	do.Provide(inj, provide)
+	do.Provide(inj, func(inj do.Injector) (*exporter, error) {
+		return &exporter{
+			log:    *logging.New().WithName("Exporter"),
+			chk:    do.MustInvokeAs[checkerSrv](inj),
+			tracks: make(map[string]trackFileData),
+		}, nil
+	})
 }
 
 // Export get the exporter and execute it on the sd file set
