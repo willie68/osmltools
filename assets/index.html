@@ -1,0 +1,26 @@
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Datei-Upload</title>
+</head>
+<body>
+    <h1>Datei hochladen</h1>
+    <form action="upload.php" method="post" enctype="multipart/form-data">
+        <label for="datei">Datei auswählen:</label>
+        <input type="file" name="datei" required><br><br>
+
+        <label for="vesselid">Fahrzeug-ID (0–65535):</label>
+        <input type="number" name="vesselid" min="0" max="65535" required><br><br>
+        
+        <label for="username">Benutzer:</label>
+        <input type="text" name="username" required><br><br>
+
+        <button type="submit">Hochladen</button>
+</form>
+
+    <hr>
+    <p><a href="admin.php">Zur Admin-Ansicht</a></p>
+</body>
+</html>
