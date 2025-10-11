@@ -11,7 +11,7 @@ require (
 	github.com/twpayne/go-geom v1.6.1
 	github.com/twpayne/go-gpx v1.5.0
 	github.com/twpayne/go-kml/v3 v3.3.0
-	github.com/willie68/gowillie68 v0.0.1
+	github.com/willie68/gowillie68 v0.0.0-20251011093023-8ccdd07347fd
 	github.com/zalando/go-keyring v0.2.6
 	golang.org/x/sys v0.36.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
@@ -36,6 +36,6 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/willie68/gowillie68 => ../gowillie68
+//replace github.com/willie68/gowillie68 => ../gowillie68
 
 //replace github.com/adrianmo/go-nmea => ../go-nmea
