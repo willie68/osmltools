@@ -15,6 +15,8 @@ type CheckResult struct {
 	ErrorCount   int                    `json:"errorCount"`
 	WarningCount int                    `json:"warningCount"`
 	Files        map[string]*FileResult `json:"files"`
+	UnknownTags  int                    `json:"unknownTags"`
+	ErrorTags    int                    `json:"errorTags"`
 }
 
 type FileResult struct {
@@ -34,6 +36,8 @@ type FileResult struct {
 	ErrorA         int       `json:"errorA"`
 	ErrorB         int       `json:"errorB"`
 	ErrorI         int       `json:"errorI"`
+	UnknownTags    int       `json:"unknownTags"`
+	ErrorTags      int       `json:"errorTags"`
 }
 
 func NewGeneralResult() *GeneralResult {

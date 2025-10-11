@@ -8,10 +8,11 @@ import (
 	"github.com/willie68/osmltools/internal/convert"
 	"github.com/willie68/osmltools/internal/export"
 	"github.com/willie68/osmltools/internal/track"
+	"github.com/willie68/osmltools/internal/upload"
 )
 
 var (
-	// Inj the injector used for the programm
+	// Inj the central injector used for the whole programm
 	Inj = do.New()
 )
 
@@ -23,4 +24,5 @@ func Init() {
 	backup.Init(Inj)
 	track.Init(Inj)
 	convert.Init(Inj)
+	upload.Init(Inj)
 }

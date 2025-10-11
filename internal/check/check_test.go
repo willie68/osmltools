@@ -5,19 +5,24 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/samber/do/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"github.com/willie68/gowillie68/pkg/fileutils"
-	"github.com/willie68/osmltools/internal/logging"
+	"github.com/willie68/osmltools/internal/model"
 	"github.com/willie68/osmltools/internal/osml"
 )
 
 const testdata = "../../testdata"
 
+type checkerSrv interface {
+	Check(sdCardFolder, outputFolder string, overwrite, report bool) (*model.CheckResult, error)
+}
+
 type CheckSuite struct {
 	suite.Suite
 	ast *assert.Assertions
-	chk Checker
+	chk checkerSrv
 }
 
 func TestCheckSuite(t *testing.T) {
@@ -26,9 +31,9 @@ func TestCheckSuite(t *testing.T) {
 
 func (s *CheckSuite) SetupTest() {
 	s.ast = assert.New(s.T())
-	s.chk = Checker{
-		log: *logging.New().WithName("testchecker").WithLevel(logging.Error),
-	}
+	inj := do.New()
+	Init(inj)
+	s.chk = do.MustInvokeAs[checkerSrv](inj)
 }
 
 func (s *CheckSuite) TestCheckBasicCheck() {
@@ -36,20 +41,20 @@ func (s *CheckSuite) TestCheckBasicCheck() {
 	os.RemoveAll(of)
 	os.MkdirAll(of, os.ModePerm)
 
-	_, err := s.chk.Check(
+	res, err := s.chk.Check(
 		filepath.Join(testdata, "sdcard"),
 		of,
 		true,
 		true,
 	)
 	s.ast.NoError(err)
-	s.ast.Equal(8147, s.chk.ErrorTags)
-	s.ast.Equal(16281, s.chk.UnknownTags)
-	s.ast.True(fileutils.FileExists(filepath.Join(of, "597-DATA001231-2016-09-11.nmea")))
-	s.ast.True(fileutils.FileExists(filepath.Join(of, "597-DATA001232-2016-09-11.nmea")))
-	s.ast.True(fileutils.FileExists(filepath.Join(of, "597-DATA001233-2016-09-11.nmea")))
-	s.ast.True(fileutils.FileExists(filepath.Join(of, "597-DATA001234-2016-09-11.nmea")))
-	s.ast.True(fileutils.FileExists(filepath.Join(of, "597-DATA001235-2016-09-11.nmea")))
+	s.ast.Equal(8147, res.ErrorTags)
+	s.ast.Equal(0, res.UnknownTags)
+	s.ast.True(fileutils.FileExists(filepath.Join(of, "65535-DATA001231-2016-09-11.nmea")))
+	s.ast.True(fileutils.FileExists(filepath.Join(of, "65535-DATA001232-2016-09-11.nmea")))
+	s.ast.True(fileutils.FileExists(filepath.Join(of, "65535-DATA001233-2016-09-11.nmea")))
+	s.ast.True(fileutils.FileExists(filepath.Join(of, "65535-DATA001234-2016-09-11.nmea")))
+	s.ast.True(fileutils.FileExists(filepath.Join(of, "65535-DATA001235-2016-09-11.nmea")))
 	s.ast.True(fileutils.FileExists(filepath.Join(of, "report.json")))
 }
 

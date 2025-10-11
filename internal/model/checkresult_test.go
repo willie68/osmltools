@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	js_basic = "{\n    \"created\": \"1970-01-01T01:00:00+01:00\",\n    \"errorCount\": 0,\n    \"warningCount\": 0,\n    \"files\": {\n        \"test\": {\n            \"filename\": \"testfilename\",\n            \"origin\": \"\",\n            \"created\": \"0001-01-01T00:00:00Z\",\n            \"vesselID\": 0,\n            \"errorCount\": 0,\n            \"errors\": [],\n            \"warningCount\": 0,\n            \"warnings\": []\n        }\n    }\n}"
+	js_basic = "{\n    \"created\": \"1970-01-01T01:00:00+01:00\",\n    \"errorCount\": 0,\n    \"warningCount\": 0,\n    \"files\": {\n        \"test\": {\n            \"filename\": \"testfilename\",\n            \"origin\": \"\",\n            \"created\": \"0001-01-01T00:00:00Z\",\n            \"size\": 0,\n            \"vesselID\": 0,\n            \"datagramCount\": 0,\n            \"version\": \"\",\n            \"firstTimestamp\": \"0001-01-01T00:00:00Z\",\n            \"lastTimestamp\": \"0001-01-01T00:00:00Z\",\n            \"errorCount\": 0,\n            \"errors\": [],\n            \"warningCount\": 0,\n            \"warnings\": [],\n            \"errorA\": 0,\n            \"errorB\": 0,\n            \"errorI\": 0,\n            \"unknownTags\": 0,\n            \"errorTags\": 0\n        }\n    },\n    \"unknownTags\": 0,\n    \"errorTags\": 0\n}"
 )
 
 func TestCeckResultBasic(t *testing.T) {

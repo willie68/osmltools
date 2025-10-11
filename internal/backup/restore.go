@@ -8,7 +8,7 @@ import (
 )
 
 // Restore restore all files from a zip to the sd card
-func (b *Backup) Restore(zipfile, sdCardFolder string) (string, error) {
+func (b *backup) Restore(zipfile, sdCardFolder string) (string, error) {
 	fs, err := os.Stat(sdCardFolder)
 	if err != nil {
 		return "", err

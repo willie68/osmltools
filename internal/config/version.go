@@ -14,14 +14,15 @@ var (
 
 // Version the version information
 type Version struct {
-	version string `json:"version"`
-	commit  string `json:"commit"`
-	date    string `json:"date"`
+	version string
+	commit  string
+	date    string
 }
 
 func Init(inj do.Injector) {
-	ver := NewVersion()
-	do.ProvideValue(inj, *ver)
+	do.Provide(inj, func(_ do.Injector) (*Version, error) {
+		return NewVersion(), nil
+	})
 }
 
 // NewVersion creating a new version

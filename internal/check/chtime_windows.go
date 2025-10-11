@@ -10,7 +10,7 @@ import (
 )
 
 // modifyFileTime modifies the file time of the given file to the newTime for windows only
-func (c *Checker) modifyFileTime(path string, newTime time.Time) error {
+func (c *checker) modifyFileTime(path string, newTime time.Time) error {
 	// This example is for Windows. For other OS, the implementation will differ.
 	// You may need to use syscall or a third-party package for cross-platform support.
 	// Here, we use the golang.org/x/sys/windows package for Windows.

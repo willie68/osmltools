@@ -7,10 +7,13 @@ import (
 	"github.com/samber/do/v2"
 	"github.com/spf13/cobra"
 	"github.com/willie68/osmltools/internal"
-	"github.com/willie68/osmltools/internal/convert"
 	"github.com/willie68/osmltools/internal/logging"
 	"github.com/willie68/osmltools/internal/model"
 )
+
+type converter interface {
+	Convert(sdCardFolder string, files []string, track string) (tps *model.TrackPoints, err error)
+}
 
 var convertCmd = &cobra.Command{
 	Use:    "convert",
@@ -39,7 +42,7 @@ func init() {
 
 // Convert get the exporter and execute it on the sd file set
 func Convert(sdCardFolder string, files []string, track string) error {
-	cnv := do.MustInvoke[convert.Converter](internal.Inj)
+	cnv := do.MustInvokeAs[converter](internal.Inj)
 	res, err := cnv.Convert(sdCardFolder, files, track)
 	if err != nil {
 		return err

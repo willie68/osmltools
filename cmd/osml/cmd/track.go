@@ -7,8 +7,13 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/willie68/osmltools/internal"
 	"github.com/willie68/osmltools/internal/model"
-	"github.com/willie68/osmltools/internal/track"
 )
+
+type trackManager interface {
+	NewTrack(sdCardFolder string, files []string, trackfile string, track model.Track) error
+	AddTrack(sdCardFolder string, files []string, trackfile string) error
+	ListTrack(trackfile string) (*model.Track, error)
+}
 
 var (
 	trackCmd = &cobra.Command{
@@ -77,7 +82,7 @@ func init() {
 
 // NewTrack creates a new track file and adds the given data files to it
 func NewTrack(sdCardFolder string, files []string, trackfile string, tr model.Track) error {
-	tm := do.MustInvokeAs[track.Manager](internal.Inj)
+	tm := do.MustInvokeAs[trackManager](internal.Inj)
 	err := tm.NewTrack(sdCardFolder, files, trackfile, tr)
 	if err == nil {
 		if JSONOutput {
@@ -91,7 +96,7 @@ func NewTrack(sdCardFolder string, files []string, trackfile string, tr model.Tr
 
 // AddTrack add  data files to an existing track file
 func AddTrack(sdCardFolder string, files []string, trackfile string) error {
-	tm := do.MustInvokeAs[track.Manager](internal.Inj)
+	tm := do.MustInvokeAs[trackManager](internal.Inj)
 	err := tm.AddTrack(sdCardFolder, files, trackfile)
 	if err == nil {
 		if JSONOutput {
@@ -105,7 +110,7 @@ func AddTrack(sdCardFolder string, files []string, trackfile string) error {
 
 // ListTrack lists information about the given track file
 func ListTrack(trackfile string) error {
-	tm := do.MustInvokeAs[track.Manager](internal.Inj)
+	tm := do.MustInvokeAs[trackManager](internal.Inj)
 	tr, err := tm.ListTrack(trackfile)
 	if err == nil {
 		if JSONOutput {
